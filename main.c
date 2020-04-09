@@ -10,6 +10,9 @@
 #include <chprintf.h>
 #include <motors.h>
 #include <audio/microphone.h>
+#include "sensors/proximity.h"
+
+
 
 #include <audio_processing.h>
 #include <fft.h>
@@ -20,6 +23,10 @@
 #define SEND_FROM_MIC
 
 bool initialised = FALSE;
+
+messagebus_t bus;
+MUTEX_DECL(bus_lock);
+CONDVAR_DECL(bus_condvar);
 
 void status(bool status){
 	initialised=status;
@@ -38,6 +45,7 @@ static void serial_start(void)
 }
 
 
+
 int main(void)
 {
 
@@ -51,6 +59,10 @@ int main(void)
     usb_start();
     //inits the motors
     motors_init();
+
+    messagebus_init(&bus, &bus_lock, &bus_condvar);
+
+    proximity_start();
 
 
 #ifdef SEND_FROM_MIC
@@ -69,9 +81,9 @@ int main(void)
 #endif  /* SEND_FROM_MIC */
     	}
     	else{
-    		left_motor_set_speed(600);
-    		right_motor_set_speed(-600);
-    		palTogglePad(GPIOD, GPIOD_LED_FRONT);
+    		chThdSleepMilliseconds(100);
+
+    	    obstacle_start();
     	}
     }
 
