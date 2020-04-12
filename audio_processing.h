@@ -37,4 +37,7 @@ void wait_send_to_computer(void);
 */
 float* get_audio_buffer_ptr(BUFFER_NAME_t name);
 
+void audio_detection(float *micleft, float *micright, float *micfront, float *micback,
+					 float *micLeft_mag, float *micFront_mag);
+
 #endif /* AUDIO_PROCESSING_H */

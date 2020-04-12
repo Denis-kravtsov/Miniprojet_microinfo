@@ -34,7 +34,7 @@ static float micBack_output[FFT_SIZE];
 #define MIN_VALUE_THRESHOLD	10000
 
 #define MIN_FREQ		10	//we don't analyze before this index to not use resources for nothing
-#define FREQ_INIT	64	//1kHz
+#define FREQ_INIT	    64	//1kHz
 
 #define MAX_FREQ		128	//we don't analyze after this index to not use resources for nothing
 
@@ -181,4 +181,57 @@ float* get_audio_buffer_ptr(BUFFER_NAME_t name){
 	}
 }
 
+void audio_detection(float *micleft, float *micright, float *micfront, float *micback,
+					 float *micLeft_mag, float *micFront_mag){
+	float max_norm_left = MIN_VALUE_THRESHOLD;
+	float max_norm_front = MIN_VALUE_THRESHOLD;
+	int16_t max_norm_index_left = -1;
+	int16_t max_norm_index_front = -1;
+	float arg_micLeft = 0;
+	float arg_micRight = 0;
+	float arg_micFront = 0;
+	float arg_micBack = 0;
+	float arg_diff_side = 0;
+	float arg_diff_fb = 0;
 
+	doFFT_optimized(FFT_SIZE, micleft);
+	doFFT_optimized(FFT_SIZE, micright);
+	doFFT_optimized(FFT_SIZE, micfront);
+	doFFT_optimized(FFT_SIZE, micback);
+
+	arm_cmplx_mag_f32(micleft, micLeft_mag, FFT_SIZE);
+	arm_cmplx_mag_f32(micfront, micFront_mag, FFT_SIZE);
+
+	for(uint16_t i = MIN_FREQ ; i <= MAX_FREQ ; i++){
+			if(micLeft_mag[i] > max_norm_left){
+				max_norm_left = micLeft_mag[i];
+				max_norm_index_left = i;
+			}
+			if(micFront_mag[i] > max_norm_front){
+				max_norm_front = micFront_mag[i];
+				max_norm_index_front = i;
+			}
+		}
+	arg_micLeft = atan2f(micleft[(2*max_norm_index_left)+1], micleft[(2*max_norm_index_left)]);
+	arg_micRight = atan2f(micright[(2*max_norm_index_left)+1], micright[2*max_norm_index_left]);
+	arg_micFront = atan2f(micfront[(2*max_norm_index_front)+1], micfront[2*max_norm_index_front]);
+	arg_micBack = atan2f(micback[(2*max_norm_index_front)+1], micback[2*max_norm_index_front]);
+	arg_diff_side = arg_micLeft-arg_micRight;
+	arg_diff_fb = arg_micFront-arg_micBack;
+	int16_t arg_diff_side_deg = 180/PI*arg_diff_side;
+	int16_t arg_diff_fb_deg = 180/PI*arg_diff_fb;
+	if(abs(arg_micLeft)<PI/2 && fabs(arg_diff_fb_deg)>2){
+		while(arg_diff_fb_deg>2){
+			right_motor_set_speed(-600);
+			left_motor_set_speed(600);
+		}
+
+	}
+	else if(abs(arg_micLeft)>PI/2 && fabs(arg_diff_fb_deg)>2){
+		while(arg_diff_fb_deg>2){
+			right_motor_set_speed(600);
+			left_motor_set_speed(-600);
+		}
+	}
+
+}

@@ -22,7 +22,7 @@
 //uncomment to send the FFTs results from the real microphones
 #define SEND_FROM_MIC
 
-bool initialised = FALSE;
+bool initialised, direction_acquired = FALSE;
 
 messagebus_t bus;
 MUTEX_DECL(bus_lock);
@@ -31,7 +31,9 @@ CONDVAR_DECL(bus_condvar);
 void status(bool status){
 	initialised=status;
 }
-
+void direction(bool status){
+	direction_acquired=status;
+}
 static void serial_start(void)
 {
 	static SerialConfig ser_cfg = {
@@ -64,7 +66,12 @@ int main(void)
 
     proximity_start();
 
-
+    static float micLeft[2*FFT_SIZE];
+    static float micRight[2*FFT_SIZE];
+    static float micFront[2*FFT_SIZE];
+    static float micBack[2*FFT_SIZE];
+    static float micLeft_mag[FFT_SIZE];
+    static float micFront_mag[FFT_SIZE];
 #ifdef SEND_FROM_MIC
     //starts the microphones processing thread.
     //it calls the callback given in parameter when samples are ready
@@ -84,6 +91,14 @@ int main(void)
     		chThdSleepMilliseconds(100);
 
     	    obstacle_start();
+    	    if(direction_acquired==FALSE){
+    	    	 arm_copy_f32(get_audio_buffer_ptr(LEFT_OUTPUT), micLeft, 2*FFT_SIZE);
+    	    	 arm_copy_f32(get_audio_buffer_ptr(RIGHT_OUTPUT), micRight, 2*FFT_SIZE);
+    	    	 arm_copy_f32(get_audio_buffer_ptr(FRONT_OUTPUT), micFront, 2*FFT_SIZE);
+    	    	 arm_copy_f32(get_audio_buffer_ptr(BACK_OUTPUT), micBack, 2*FFT_SIZE);
+
+    	    	 audio_detection(micLeft, micRight, micFront, micBack, micLeft_mag, micFront_mag);
+    	    }
     	}
     }
 
