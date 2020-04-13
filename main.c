@@ -88,10 +88,8 @@ int main(void)
 #endif  /* SEND_FROM_MIC */
     	}
     	else{
-    		chThdSleepMilliseconds(100);
-
-    	    obstacle_start();
-    	    if(direction_acquired==FALSE){
+    		//chThdSleepMilliseconds(100);
+    	    if(!direction_acquired){
     	    	 arm_copy_f32(get_audio_buffer_ptr(LEFT_OUTPUT), micLeft, 2*FFT_SIZE);
     	    	 arm_copy_f32(get_audio_buffer_ptr(RIGHT_OUTPUT), micRight, 2*FFT_SIZE);
     	    	 arm_copy_f32(get_audio_buffer_ptr(FRONT_OUTPUT), micFront, 2*FFT_SIZE);
@@ -99,9 +97,12 @@ int main(void)
 
     	    	 audio_detection(micLeft, micRight, micFront, micBack, micLeft_mag, micFront_mag);
     	    }
-    	}
-    }
+    	    else{
+    	    	obstacle_start();
+    	    }
+    	 }
 
+    }
 }
 
 #define STACK_CHK_GUARD 0xe2dee396

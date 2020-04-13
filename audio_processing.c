@@ -218,13 +218,14 @@ void audio_detection(float *micleft, float *micright, float *micfront, float *mi
 	arg_micBack = atan2f(micback[(2*max_norm_index_front)+1], micback[2*max_norm_index_front]);
 	arg_diff_side = arg_micLeft-arg_micRight;
 	arg_diff_fb = arg_micFront-arg_micBack;
-	int16_t arg_diff_side_deg = 180/PI*arg_diff_side;
-	int16_t arg_diff_fb_deg = 180/PI*arg_diff_fb;
+	int16_t arg_diff_side_deg = (180/PI)*arg_diff_side;
+	int16_t arg_diff_fb_deg = (180/PI)*arg_diff_fb;
 	if(abs(arg_micLeft)<PI/2 && fabs(arg_diff_fb_deg)>2){
 		while(arg_diff_fb_deg>2){
 			right_motor_set_speed(-600);
 			left_motor_set_speed(600);
 		}
+		direction(TRUE);
 
 	}
 	else if(abs(arg_micLeft)>PI/2 && fabs(arg_diff_fb_deg)>2){
@@ -232,6 +233,7 @@ void audio_detection(float *micleft, float *micright, float *micfront, float *mi
 			right_motor_set_speed(600);
 			left_motor_set_speed(-600);
 		}
+		direction(TRUE);
 	}
 
 }
