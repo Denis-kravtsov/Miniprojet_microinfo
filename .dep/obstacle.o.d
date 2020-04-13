@@ -1,6 +1,5 @@
 build/obj/obstacle.o: obstacle.c obstacle.h \
- ../e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/arm_math.h \
- ../e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/core_cm4.h \
+ ../e-puck2_main-processor/src/sensors/proximity.h \
  c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\lib\gcc\arm-none-eabi\7.2.1\include\stdint.h \
  c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\arm-none-eabi\include\stdint.h \
  c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\arm-none-eabi\include\machine\_default_types.h \
@@ -8,6 +7,8 @@ build/obj/obstacle.o: obstacle.c obstacle.h \
  c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\arm-none-eabi\include\_newlib_version.h \
  c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\arm-none-eabi\include\sys\_intsup.h \
  c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\arm-none-eabi\include\sys\_stdint.h \
+ ../e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/arm_math.h \
+ ../e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/core_cm4.h \
  ../e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/core_cmInstr.h \
  ../e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/core_cmFunc.h \
  ../e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/core_cm4_simd.h \
@@ -143,7 +144,6 @@ build/obj/obstacle.o: obstacle.c obstacle.h \
  ../e-puck2_main-processor/src/usbcfg.h \
  ../e-puck2_main-processor/ChibiOS//os/hal/lib/streams/chprintf.h \
  c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\lib\gcc\arm-none-eabi\7.2.1\include\stdarg.h \
- ../e-puck2_main-processor/src/sensors/proximity.h \
  ../e-puck2_main-processor/src/motors.h \
  ../e-puck2_main-processor/src/audio/play_melody.h \
  ../e-puck2_main-processor/src/audio/play_sound_file.h \
@@ -152,9 +152,7 @@ build/obj/obstacle.o: obstacle.c obstacle.h \
 
 obstacle.h:
 
-../e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/arm_math.h:
-
-../e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/core_cm4.h:
+../e-puck2_main-processor/src/sensors/proximity.h:
 
 c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\lib\gcc\arm-none-eabi\7.2.1\include\stdint.h:
 
@@ -169,6 +167,10 @@ c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\arm-non
 c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\arm-none-eabi\include\sys\_intsup.h:
 
 c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\arm-none-eabi\include\sys\_stdint.h:
+
+../e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/arm_math.h:
+
+../e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/core_cm4.h:
 
 ../e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/core_cmInstr.h:
 
@@ -443,8 +445,6 @@ c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\arm-non
 ../e-puck2_main-processor/ChibiOS//os/hal/lib/streams/chprintf.h:
 
 c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\lib\gcc\arm-none-eabi\7.2.1\include\stdarg.h:
-
-../e-puck2_main-processor/src/sensors/proximity.h:
 
 ../e-puck2_main-processor/src/motors.h:
 

@@ -22,7 +22,7 @@
 //uncomment to send the FFTs results from the real microphones
 #define SEND_FROM_MIC
 
-bool initialised, direction_acquired = FALSE;
+bool initialised, direction_acquired, direction_changed = FALSE;
 
 messagebus_t bus;
 MUTEX_DECL(bus_lock);
@@ -33,6 +33,9 @@ void status(bool status){
 }
 void direction(bool status){
 	direction_acquired=status;
+}
+void change(bool status){
+	direction_changed=status;
 }
 static void serial_start(void)
 {
@@ -89,7 +92,7 @@ int main(void)
     	}
     	else{
     		//chThdSleepMilliseconds(100);
-    	    if(!direction_acquired){
+    	    if(!direction_acquired||direction_changed){
     	    	 arm_copy_f32(get_audio_buffer_ptr(LEFT_OUTPUT), micLeft, 2*FFT_SIZE);
     	    	 arm_copy_f32(get_audio_buffer_ptr(RIGHT_OUTPUT), micRight, 2*FFT_SIZE);
     	    	 arm_copy_f32(get_audio_buffer_ptr(FRONT_OUTPUT), micFront, 2*FFT_SIZE);
