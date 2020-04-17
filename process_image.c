@@ -8,7 +8,7 @@
 
 #include <process_image.h>
 
-
+#define COLOUR_THRESHOLD 3
 static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
 
@@ -32,6 +32,9 @@ uint16_t extract_line_width(uint8_t *buffer){
 		mean += buffer[i];
 	}
 	mean /= IMAGE_BUFFER_SIZE;
+	if (mean>COLOUR_THRESHOLD){
+		colour_found = TRUE;
+	}
 
 	do{
 		wrong_line = 0;
@@ -80,7 +83,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 		    line_not_found = 1;
 		    falling_slope = FALSE;
 		    rising_slope = FALSE;
-		    colour_found = TRUE; //A VERIFIER!!!
+		   // colour_found = TRUE; //A VERIFIER!!!
 		}
 		//if a line too small has been detected, continues the search
 		if(!line_not_found && (end-begin) < MIN_LINE_WIDTH){
