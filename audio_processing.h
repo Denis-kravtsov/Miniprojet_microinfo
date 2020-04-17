@@ -24,6 +24,12 @@ typedef enum {
 	BACK_OUTPUT
 } BUFFER_NAME_t;
 
+enum {
+	BLACK = 0,
+	BLUE,
+	RED,
+	GREEN
+};
 
 void processAudioData(int16_t *data, uint16_t num_samples);
 
@@ -39,5 +45,6 @@ float* get_audio_buffer_ptr(BUFFER_NAME_t name);
 
 void audio_detection(float *micleft, float *micright, float *micfront, float *micback,
 					 float *micLeft_mag, float *micFront_mag);
+uint8_t get_colour_detected(void);
 
 #endif /* AUDIO_PROCESSING_H */

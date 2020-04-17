@@ -41,7 +41,7 @@ static float micBack_output[FFT_SIZE];
 #define FREQ_INIT_L		(FREQ_INIT-1) //adjustable
 #define FREQ_INIT_H		(FREQ_INIT+1)
 
-
+uint8_t colour;
 /*
 *	Simple function used to detect the highest value in a buffer
 *	and to execute a motor command depending on it
@@ -61,6 +61,7 @@ void sound_remote(float* data){
 	//turn
 	if(max_norm_index >= FREQ_INIT_L && max_norm_index <= FREQ_INIT_H){
 		status(TRUE);
+		colour = BLACK;
 	}
 }
 
@@ -220,20 +221,9 @@ void audio_detection(float *micleft, float *micright, float *micfront, float *mi
 	arg_diff_fb = arg_micFront-arg_micBack;
 	int16_t arg_diff_side_deg = (180/PI)*arg_diff_side;
 	int16_t arg_diff_fb_deg = (180/PI)*arg_diff_fb;
-	if(abs(arg_micLeft)<PI/4 && fabs(arg_diff_fb_deg)>=2 && fabs(arg_diff_fb_deg)<=360){
-		while(fabs(arg_diff_fb_deg)>=2){
-			right_motor_set_speed(-600);
-			left_motor_set_speed(600);
-		}
-		direction(TRUE);
 
-	}
-	else if(abs(arg_micLeft)>PI/4 && fabs(arg_diff_fb_deg)>2 && fabs(arg_diff_fb_deg)<=360){
-		while(fabs(arg_diff_fb_deg)>=2){
-			right_motor_set_speed(600);
-			left_motor_set_speed(-600);
-		}
-		direction(TRUE);
-	}
+}
 
+uint8_t get_colour_detected(void){
+	return colour;
 }

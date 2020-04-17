@@ -11,12 +11,12 @@
 #include <motors.h>
 #include <audio/microphone.h>
 #include "sensors/proximity.h"
+#include <camera/po8030.h>
 
-
-
+#include <obstacle.h>
 #include <audio_processing.h>
 #include <fft.h>
-
+#include <process_image.h>
 #include <arm_math.h>
 
 //uncomment to send the FFTs results from the real microphones
@@ -37,6 +37,13 @@ void direction(bool status){
 void change(bool status){
 	direction_changed=status;
 }
+void SendUint8ToComputer(uint8_t* data, uint16_t size)
+{
+	chSequentialStreamWrite((BaseSequentialStream *)&SD3, (uint8_t*)"START", 5);
+	chSequentialStreamWrite((BaseSequentialStream *)&SD3, (uint8_t*)&size, sizeof(uint16_t));
+	chSequentialStreamWrite((BaseSequentialStream *)&SD3, (uint8_t*)data, size);
+}
+
 static void serial_start(void)
 {
 	static SerialConfig ser_cfg = {
@@ -69,12 +76,7 @@ int main(void)
 
     proximity_start();
 
-    static float micLeft[2*FFT_SIZE];
-    static float micRight[2*FFT_SIZE];
-    static float micFront[2*FFT_SIZE];
-    static float micBack[2*FFT_SIZE];
-    static float micLeft_mag[FFT_SIZE];
-    static float micFront_mag[FFT_SIZE];
+
 #ifdef SEND_FROM_MIC
     //starts the microphones processing thread.
     //it calls the callback given in parameter when samples are ready
@@ -92,17 +94,17 @@ int main(void)
     	}
     	else{
     		//chThdSleepMilliseconds(100);
-    	    if(!direction_acquired||direction_changed){
+    	  /*  if(!direction_acquired||direction_changed){
     	    	 arm_copy_f32(get_audio_buffer_ptr(LEFT_OUTPUT), micLeft, 2*FFT_SIZE);
     	    	 arm_copy_f32(get_audio_buffer_ptr(RIGHT_OUTPUT), micRight, 2*FFT_SIZE);
     	    	 arm_copy_f32(get_audio_buffer_ptr(FRONT_OUTPUT), micFront, 2*FFT_SIZE);
     	    	 arm_copy_f32(get_audio_buffer_ptr(BACK_OUTPUT), micBack, 2*FFT_SIZE);
 
     	    	 audio_detection(micLeft, micRight, micFront, micBack, micLeft_mag, micFront_mag);
-    	    }
-    	    else{
+    	    }*/
+    	   // else{
     	    	obstacle_start();
-    	    }
+    	    //}
     	 }
 
     }

@@ -13,6 +13,7 @@ CSRC += ./main.c \
 		./audio_processing.c \
 		./fft.c \
 		./obstacle.c \
+		./process_image.c \
 #Header folders to include
 INCDIR += 
 
