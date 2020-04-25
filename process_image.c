@@ -8,7 +8,7 @@
 
 #include <process_image.h>
 
-#define COLOUR_THRESHOLD 3
+#define COLOUR_THRESHOLD 1000
 static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
 
@@ -36,6 +36,9 @@ uint16_t extract_line_width(uint8_t *buffer){
 	if (mean>COLOUR_THRESHOLD){
 		colour_found = TRUE;
 	}
+	else{
+		colour_found = FALSE;
+	}
 	variable = FALSE;
 	do{
 		wrong_line = 0;
@@ -61,12 +64,12 @@ uint16_t extract_line_width(uint8_t *buffer){
 		       // chprintf((BaseSequentialStream *)&SD3, " begin = %f\n\r", begin);
 		        stop = 1;
 		        falling_slope = TRUE;
-		        variable = TRUE;
+		       variable = TRUE;
 		    }
 		    i++;
 		}
 		//if a begin was found, search for an end
-		if (!variable || !begin)
+		if (!variable)
 			i = 0;
 		if (i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE)){
 		    stop = 0;
@@ -123,7 +126,9 @@ uint16_t extract_line_width(uint8_t *buffer){
 		begin = 0;
 		end = 0;
 		width = last_width;
+		variable = FALSE;
 	}else{
+		variable = FALSE;
 		last_width = width = (end - begin);
 		line_position = (begin + end)/2; //gives the line position.
 	}
@@ -186,7 +191,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 		//search for a line in the image and gets its width in pixels
 		lineWidth = extract_line_width(image);
-		chprintf((BaseSequentialStream *)&SD3, " lineWidth = %f\n\r", lineWidth);
+		//chprintf((BaseSequentialStream *)&SD3, " lineWidth = %f\n\r", lineWidth);
 		//converts the width into a distance between the robot and the camera
 		if(lineWidth){
 			distance_cm = PXTOCM/lineWidth;
