@@ -69,15 +69,22 @@ int main(void)
     serial_start();
     //starts the USB communication
     usb_start();
+
     //inits the motors
     motors_init();
-
+    //configuration camera
+    dcmi_start();
+	po8030_start();
     messagebus_init(&bus, &bus_lock, &bus_condvar);
 
     proximity_start();
 
+	process_image_start();
 
-#ifdef SEND_FROM_MIC
+
+
+
+/*#ifdef SEND_FROM_MIC
     //starts the microphones processing thread.
     //it calls the callback given in parameter when samples are ready
     mic_start(&processAudioData);
@@ -85,14 +92,16 @@ int main(void)
 
     /* Infinite loop. */
     while (1) {
-    	if(initialised==FALSE){
+    	 chThdSleepMilliseconds(1000);
+
+    	/*if(initialised==FALSE){
 #ifdef SEND_FROM_MIC
         //waits until a result must be sent to the computer
         wait_send_to_computer();
 
 #endif  /* SEND_FROM_MIC */
-    	}
-    	else{
+  //  	}
+    	//else{
     		//chThdSleepMilliseconds(100);
     	  /*  if(!direction_acquired||direction_changed){
     	    	 arm_copy_f32(get_audio_buffer_ptr(LEFT_OUTPUT), micLeft, 2*FFT_SIZE);
@@ -101,12 +110,12 @@ int main(void)
     	    	 arm_copy_f32(get_audio_buffer_ptr(BACK_OUTPUT), micBack, 2*FFT_SIZE);
 
     	    	 audio_detection(micLeft, micRight, micFront, micBack, micLeft_mag, micFront_mag);
-    	    }*/
+    	    }
     	   // else{
     	    	obstacle_start();
     	    //}
-    	 }
-
+    	 }*/
+    	obstacle_start();
     }
 }
 

@@ -61,7 +61,7 @@ void sound_remote(float* data){
 	//turn
 	if(max_norm_index >= FREQ_INIT_L && max_norm_index <= FREQ_INIT_H){
 		status(TRUE);
-		colour = BLACK;
+		//colour = BLACK;
 	}
 }
 

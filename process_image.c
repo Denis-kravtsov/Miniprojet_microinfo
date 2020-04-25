@@ -21,10 +21,11 @@ bool rising_slope, falling_slope, colour_found = FALSE;
  */
 uint16_t extract_line_width(uint8_t *buffer){
 
-	uint16_t i = 0, begin = 0, end = 0, width = 0;
+	volatile uint16_t i = 0;
+	uint16_t begin = 0, end = 0, width = 0;
 	uint8_t stop = 0, wrong_line = 0, line_not_found = 0;
 	uint32_t mean = 0;
-
+	bool variable = FALSE;
 	static uint16_t last_width = PXTOCM/GOAL_DISTANCE;
 
 	//performs an average
@@ -35,10 +36,21 @@ uint16_t extract_line_width(uint8_t *buffer){
 	if (mean>COLOUR_THRESHOLD){
 		colour_found = TRUE;
 	}
-
+	variable = FALSE;
 	do{
 		wrong_line = 0;
+		if(!variable)
+			i=0;
 		//search for a begin
+		//line_not_found = 1;
+		/*chprintf((BaseSequentialStream *)&SD3, " line_not_found1 = %f\n\r", line_not_found);
+		chprintf((BaseSequentialStream *)&SD3, " begin1 = %f\n\r", begin);
+		chprintf((BaseSequentialStream *)&SD3, " end1 = %f\n\r", end);
+		chprintf((BaseSequentialStream *)&SD3, " stop1 = %f\n\r", stop);
+		chprintf((BaseSequentialStream *)&SD3, " mean1 = %f\n\r", mean);*/
+		/*volatile uint8_t debug_buffer[IMAGE_BUFFER_SIZE/4];
+		for(int j = 0; j<IMAGE_BUFFER_SIZE; j+=4)
+			debug_buffer[j/4] = buffer[j];*/
 		while(stop == 0 && i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE))
 		{ 
 			//the slope must at least be WIDTH_SLOPE wide and is compared
@@ -46,45 +58,56 @@ uint16_t extract_line_width(uint8_t *buffer){
 		    if(buffer[i] > mean && buffer[i+WIDTH_SLOPE] < mean)
 		    {
 		        begin = i;
+		       // chprintf((BaseSequentialStream *)&SD3, " begin = %f\n\r", begin);
 		        stop = 1;
 		        falling_slope = TRUE;
+		        variable = TRUE;
 		    }
 		    i++;
 		}
 		//if a begin was found, search for an end
-		if (i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE))
-		{
+		if (!variable || !begin)
+			i = 0;
+		if (i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE)){
 		    stop = 0;
 		    
-		    while(stop == 0 && i < IMAGE_BUFFER_SIZE)
+		    while(stop == 0 && i < IMAGE_BUFFER_SIZE - WIDTH_SLOPE)
 		    {
-		        if(buffer[i] > mean && buffer[i-WIDTH_SLOPE] < mean)
+		        if(buffer[i] < mean && buffer[i+WIDTH_SLOPE] > mean)
 		        {
 		            end = i;
+		            //chprintf((BaseSequentialStream *)&SD3, " end = %f\n\r", end);
 		            stop = 1;
 		            rising_slope = TRUE;
 		        }
-
-		        else if(i == IMAGE_BUFFER_SIZE-1 && !end && begin){//A VERIFIER!!!
-		        	end = i;
-		        	stop = 1;
-		        	rising_slope = FALSE;
-		        }
 		        i++;
 		    }
+
+
 		    //if an end was not found
 		}
-		else if (i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE) && end && !begin){ //if no begin found but an end was found
+		if(i < (IMAGE_BUFFER_SIZE ) && (!end) && begin){//A VERIFIER!!!
+		    	end = IMAGE_BUFFER_SIZE;
+		    	//chprintf((BaseSequentialStream *)&SD3, " end = %f\n\r", end);
+		    	stop = 1;
+		    	rising_slope = FALSE;
+		    }
+		if(i < (IMAGE_BUFFER_SIZE ) && end && !begin){ //if no begin found but an end was found
 			begin = 1;
 			falling_slope = FALSE;
 		}
-		else if (i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE) && !end && !begin)//if no begin and no end was found
+		else if (i > IMAGE_BUFFER_SIZE || (!end && !begin))//if no begin and no end was found
 		{
 		    line_not_found = 1;
 		    falling_slope = FALSE;
 		    rising_slope = FALSE;
 		   // colour_found = TRUE; //A VERIFIER!!!
 		}
+		/*chprintf((BaseSequentialStream *)&SD3, " line_not_found2 = %f\n\r", line_not_found);
+		chprintf((BaseSequentialStream *)&SD3, " begin2 = %f\n\r", begin);
+		chprintf((BaseSequentialStream *)&SD3, " end2 = %f\n\r", end);
+		chprintf((BaseSequentialStream *)&SD3, " stop2 = %f\n\r", stop);
+		chprintf((BaseSequentialStream *)&SD3, " mean2 = %f\n\r", mean);*/
 		//if a line too small has been detected, continues the search
 		if(!line_not_found && (end-begin) < MIN_LINE_WIDTH){
 			i = end;
@@ -92,6 +115,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 			end = 0;
 			stop = 0;
 			wrong_line = 1;
+			variable = TRUE;
 		}
 	}while(wrong_line);
 
@@ -162,7 +186,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 		//search for a line in the image and gets its width in pixels
 		lineWidth = extract_line_width(image);
-
+		chprintf((BaseSequentialStream *)&SD3, " lineWidth = %f\n\r", lineWidth);
 		//converts the width into a distance between the robot and the camera
 		if(lineWidth){
 			distance_cm = PXTOCM/lineWidth;

@@ -29,17 +29,17 @@ static THD_FUNCTION(Obstacle, arg)
 	 chRegSetThreadName(__FUNCTION__);
 
 	 messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
-	 proximity_msg_t prox_values;
-	 int16_t leftSpeed = 0, rightSpeed = 0;
-	 int16_t prox_values_temp[8];
-	 uint8_t stop_loop = 0;
-	 systime_t time;
-	 int16_t speed_correction = 0;
-	 int16_t corridor_approx_pos = 0;
+	 volatile proximity_msg_t prox_values;
+	 volatile int16_t leftSpeed = 0, rightSpeed = 0;
+	 volatile int16_t prox_values_temp[8];
+	 volatile uint8_t stop_loop = 0;
+	 volatile systime_t time;
+	 volatile int16_t speed_correction = 0;
+	 volatile int16_t corridor_approx_pos = 0;
 	 while(stop_loop == 0) {
 	    	time = chVTGetSystemTime();
 	    	if(get_falling_edge() || get_rising_edge()){
-	    		corridor_approx_pos = IMAGE_BUFFER_SIZE - (get_line_position() - (IMAGE_BUFFER_SIZE/2));
+	    		corridor_approx_pos = -(get_line_position() - (IMAGE_BUFFER_SIZE/2));
 	    		speed_correction = (corridor_approx_pos);
 
 	    	        //if the line is nearly in front of the camera, don't rotate
@@ -48,9 +48,12 @@ static THD_FUNCTION(Obstacle, arg)
 	    	    }
 
 	    	        //applies the speed from the PI regulator and the correction for the rotation
-	    	    while((prox_values.delta[2]||prox_values.delta[5])==0 && !(get_colour_status())){//CONDITION A ADAPTER!!!
-	    	    	right_motor_set_speed(MOTOR_SPEED_LIMIT - ROTATION_COEFF * speed_correction);
-	    	    	left_motor_set_speed(MOTOR_SPEED_LIMIT + ROTATION_COEFF * speed_correction);
+	    	    while(!(get_colour_status())){//CONDITION A ADAPTER!!!
+	    	    	if((prox_values.delta[2] && prox_values.delta[5]) > 1000){
+	    	    		break;
+	    	    	}
+	    	    		right_motor_set_speed(MOTOR_SPEED_LIMIT - ROTATION_COEFF * speed_correction);
+	    	    		left_motor_set_speed(MOTOR_SPEED_LIMIT + ROTATION_COEFF * speed_correction);
 	    	    }
 	    	}
 	    	messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
