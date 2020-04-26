@@ -37,37 +37,77 @@ static THD_FUNCTION(Obstacle, arg)
 	 volatile int16_t speed_correction = 0;
 	 int16_t corridor_approx_pos = 0;
 	 bool turn_init = FALSE;
+	 int mean_prox = 0;
 	 while(stop_loop == 0) {
+		 	mean_prox = 0;
 	    	time = chVTGetSystemTime();
+	    	messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
 	    	if(get_falling_edge() || get_rising_edge()){
 	    		corridor_approx_pos = -(get_line_position() - (IMAGE_BUFFER_SIZE/2));
 	    		speed_correction = (corridor_approx_pos);
-	    		//chprintf((BaseSequentialStream *)&SD3, " mean1 = %f\n\r", corridor_approx_pos);
-	    	        //if the line is nearly in front of the camera, don't rotate
+	    	    //if the line is nearly in front of the camera, don't rotate
 	    	    if(abs(speed_correction) < ROTATION_THRESHOLD){
 	    	    	speed_correction = 0;
 	    	    }
 	    	}
+	    	for(int i = 0; i < 8; i++){
+	    		mean_prox += prox_values.delta[i];
+
+	    	}
+	    	mean_prox = mean_prox/8;
+	    	//UNCOMMNENT THE NEEDED FUNCTION
+	    	//TEST FUNCTION GENERAL(FOR DEBUG) 1
+	    	if(abs(prox_values.delta[2] || prox_values.delta[5]) < 100 && !(get_colour_status())){
+	      		turn_init=TRUE;
+	    		while(turn_init){
+	    		     right_motor_set_speed(0);
+	    			 left_motor_set_speed(0);
+	    			 break;
+	    		}
+	    		if(get_colour_status()){
+	    		    turn_init = FALSE;
+	    		}
+
+	    	}
+	    	//TEST FUNCTION GENERAL(FOR DEBUG) 2
+	    	/*if(abs(prox_values.delta[2] || prox_values.delta[5]) < mean_prox && !(get_colour_status())){
+	      		turn_init=TRUE;
+	    		while(turn_init){
+	    		     right_motor_set_speed(0);
+	    			 left_motor_set_speed(0);
+	    			 break;
+	    		}
+	    		if(get_colour_status()){
+	    		    turn_init = FALSE;
+	    		}
+
+	    	}*/
 	    	        //applies the speed from the PI regulator and the correction for the rotation
-	    	//if(abs(prox_values.delta[2] && prox_values.delta[5]) > 30&& !(get_colour_status())){
+	    	//TEST FUNCTION 1
+	    	/*if(abs(prox_values.delta[2] || prox_values.delta[5]) < 100 && !(get_colour_status())){
 	    		turn_init=TRUE;
 	    		while(turn_init){
 	    			 right_motor_set_speed(MOTOR_SPEED_LIMIT/2 - ROTATION_COEFF * speed_correction);
 	    			 left_motor_set_speed(MOTOR_SPEED_LIMIT/2 + ROTATION_COEFF * speed_correction);
 	    			 break;
 	    		}
-	    		//if(get_colour_status){
-	    		//	turn_init = FALSE;
-	    		//}
+	    		if(get_colour_status()){
+	    			turn_init = FALSE;
+	    		}
 
-	    	//}
-	    	//else{
-			//	messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
-			  //leftSpeed = MOTOR_SPEED_LIMIT - prox_values.delta[0]*2 - prox_values.delta[1];
-		//		rightSpeed = MOTOR_SPEED_LIMIT - prox_values.delta[7]*2 - prox_values.delta[6];
-			//	right_motor_set_speed(rightSpeed);
-			//	left_motor_set_speed(leftSpeed);
-	    	//}
+	    	}*/
+	    	//TEST FUNCTION 2
+	    	/*if((get_line_width()>IMAGE_BUFFER_SIZE/2) && ((prox_values.delta[2] || prox_values.delta[5]) < 50)){
+	    		 right_motor_set_speed(MOTOR_SPEED_LIMIT/2 - ROTATION_COEFF * speed_correction);
+	    		left_motor_set_speed(MOTOR_SPEED_LIMIT/2 + ROTATION_COEFF * speed_correction);
+	    	}*/
+	    	else{
+
+			    leftSpeed = MOTOR_SPEED_LIMIT - prox_values.delta[0]*2 - prox_values.delta[1];
+				rightSpeed = MOTOR_SPEED_LIMIT - prox_values.delta[7]*2 - prox_values.delta[6];
+				right_motor_set_speed(rightSpeed);
+				left_motor_set_speed(leftSpeed);
+	    	}
 
 
 	   		chThdSleepUntilWindowed(time, time + MS2ST(10)); // Refresh @ 100 Hz.

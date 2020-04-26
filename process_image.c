@@ -15,6 +15,7 @@ static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
 bool rising_slope, falling_slope, colour_found = FALSE;
+uint16_t lineWidth = 0;
 /*
  *  Returns the line's width extracted from the image buffer given
  *  Returns 0 if line not found
@@ -33,7 +34,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 		mean += buffer[i];
 	}
 	mean /= IMAGE_BUFFER_SIZE;
-	if (mean>COLOUR_THRESHOLD){
+	if (buffer[IMAGE_BUFFER_SIZE]<100 && buffer[IMAGE_BUFFER_SIZE]>60){
 		colour_found = TRUE;
 	}
 	else{
@@ -58,7 +59,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 		{ 
 			//the slope must at least be WIDTH_SLOPE wide and is compared
 		    //to the mean of the image
-		    if(buffer[i] > mean && buffer[i+WIDTH_SLOPE] < mean)
+		    if(buffer[i] > mean+20 && buffer[i+WIDTH_SLOPE] < mean)
 		    {
 		        begin = i;
 		       // chprintf((BaseSequentialStream *)&SD3, " begin = %f\n\r", begin);
@@ -76,7 +77,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 		    
 		    while(stop == 0 && i < IMAGE_BUFFER_SIZE - WIDTH_SLOPE)
 		    {
-		        if(buffer[i] < mean && buffer[i+WIDTH_SLOPE] > mean)
+		        if(buffer[i] < mean && buffer[i+WIDTH_SLOPE] > mean+20)
 		        {
 		            end = i;
 		            //chprintf((BaseSequentialStream *)&SD3, " end = %f\n\r", end);
@@ -172,7 +173,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 	uint8_t *img_buff_ptr;
 	uint8_t image[IMAGE_BUFFER_SIZE] = {0};
-	uint16_t lineWidth = 0;
+
 
 	bool send_to_computer = true;
 
@@ -229,4 +230,7 @@ bool get_rising_edge(void){
 }
 bool get_colour_status(void){
 	return colour_found;
+}
+uint16_t get_line_width(void){
+	return lineWidth;
 }
