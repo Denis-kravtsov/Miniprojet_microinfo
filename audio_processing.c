@@ -40,7 +40,9 @@ static float micBack_output[FFT_SIZE];
 
 #define FREQ_INIT_L		(FREQ_INIT-1) //adjustable
 #define FREQ_INIT_H		(FREQ_INIT+1)
-
+#define PLACEHOLDER1	70
+#define PLACEHOLDER2	80
+#define PLACEHOLDER3	90
 uint8_t colour;
 /*
 *	Simple function used to detect the highest value in a buffer
@@ -62,6 +64,18 @@ void sound_remote(float* data){
 	if(max_norm_index >= FREQ_INIT_L && max_norm_index <= FREQ_INIT_H){
 		status(TRUE);
 		//colour = BLACK;
+	}
+	else if(max_norm_index >= PLACEHOLDER1+1 && max_norm_index <= PLACEHOLDER1-1){
+		status(TRUE);
+		//colour = BLUE;
+	}
+	else if(max_norm_index >= PLACEHOLDER2+1 && max_norm_index <= PLACEHOLDER2-1){
+		status(TRUE);
+		//colour = RED;
+	}
+	else if(max_norm_index >= PLACEHOLDER3+1 && max_norm_index <= PLACEHOLDER3-1){
+		status(TRUE);
+		//colour = GREEN;
 	}
 }
 

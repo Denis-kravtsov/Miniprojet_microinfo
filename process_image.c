@@ -7,7 +7,7 @@
 #include <camera/po8030.h>
 
 #include <process_image.h>
-
+#include <audio_processing.h>
 #define COLOUR_THRESHOLD 1000
 static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
@@ -141,7 +141,6 @@ uint16_t extract_line_width(uint8_t *buffer){
 		return width;
 	}
 }
-
 static THD_WORKING_AREA(waCaptureImage, 256);
 static THD_FUNCTION(CaptureImage, arg) {
 
@@ -182,14 +181,33 @@ static THD_FUNCTION(ProcessImage, arg) {
         chBSemWait(&image_ready_sem);
 		//gets the pointer to the array filled with the last image in RGB565    
 		img_buff_ptr = dcmi_get_last_image_ptr();
-
-		//Extracts only the red pixels
-		for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-			//extracts first 5bits of the first byte
-			//takes nothing from the second byte
-			image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
+		switch (get_colour_detected()){
+			case BLUE:
+				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
+					image[i/2] = (uint8_t)img_buff_ptr[i+1]&0x1F;
+				}
+				break;
+			case RED:
+				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
+					//extracts first 5bits of the first byte
+					//takes nothing from the second byte
+					image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
+				}
+				break;
+			case GREEN://A VERIFIER LA COULEUR VERTE!!!
+				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
+					//extracts first 5bits of the first byte
+					//takes nothing from the second byte
+					image[i/2] = ((uint8_t)img_buff_ptr[i+1]&0xE0)+((uint8_t)img_buff_ptr[i]&0x8);
+				}
+				break;
+			default:
+				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
+					//extracts first 5bits of the first byte
+					//takes nothing from the second byte
+					image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
+				}
 		}
-
 		//search for a line in the image and gets its width in pixels
 		lineWidth = extract_line_width(image);
 		//chprintf((BaseSequentialStream *)&SD3, " lineWidth = %f\n\r", lineWidth);

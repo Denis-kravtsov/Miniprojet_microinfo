@@ -18,7 +18,7 @@
 #include "audio/play_sound_file.h"
 #include "audio/audio_thread.h"
 #include "leds.h"
-#include "process_image.h"
+#include <process_image.h>
 #define MIN_THRESHOLD 10
 static THD_WORKING_AREA(waObstacle, 2048);
 
@@ -31,7 +31,6 @@ static THD_FUNCTION(Obstacle, arg)
 	 messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
 	 proximity_msg_t prox_values;
 	 int16_t leftSpeed = 0, rightSpeed = 0;
-	 int16_t prox_values_temp[8];
 	 uint8_t stop_loop = 0;
 	 systime_t time;
 	 volatile int16_t speed_correction = 0;
@@ -70,7 +69,7 @@ static THD_FUNCTION(Obstacle, arg)
 
 	    	}
 	    	//TEST FUNCTION GENERAL(FOR DEBUG) 2
-	    	/*if(abs(prox_values.delta[2] || prox_values.delta[5]) < mean_prox && !(get_colour_status())){
+	    	/*if(abs(prox_values.delta[2] || prox_values.delta[5]) < mean_prox + 20 && !(get_colour_status())){
 	      		turn_init=TRUE;
 	    		while(turn_init){
 	    		     right_motor_set_speed(0);
