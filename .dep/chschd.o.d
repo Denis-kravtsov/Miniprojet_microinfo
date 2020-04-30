@@ -10,8 +10,7 @@ build/obj/chschd.o: ../e-puck2_main-processor/ChibiOS//os/rt/src/chschd.c \
  c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\arm-none-eabi\include\sys\_intsup.h \
  c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\arm-none-eabi\include\sys\_stdint.h \
  c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\lib\gcc\arm-none-eabi\7.2.1\include\stdbool.h \
- ../e-puck2_main-processor/src/chconf.h \
- ../e-puck2_main-processor/ChibiOS//os/rt/include/chlicense.h \
+ chconf.h ../e-puck2_main-processor/ChibiOS//os/rt/include/chlicense.h \
  ../e-puck2_main-processor/ChibiOS//os/rt/include/chsystypes.h \
  ../e-puck2_main-processor/ChibiOS//os/rt/ports/ARMCMx/chcore.h \
  ../e-puck2_main-processor/ChibiOS//os/common/ports/ARMCMx/devices/STM32F4xx/cmparams.h \
@@ -68,7 +67,7 @@ c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\arm-non
 
 c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\lib\gcc\arm-none-eabi\7.2.1\include\stdbool.h:
 
-../e-puck2_main-processor/src/chconf.h:
+chconf.h:
 
 ../e-puck2_main-processor/ChibiOS//os/rt/include/chlicense.h:
 

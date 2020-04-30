@@ -5,13 +5,13 @@
 
 #include <main.h>
 #include <camera/po8030.h>
-
-#include <process_image.h>
 #include <audio_processing.h>
+#include <process_image.h>
+
 #define COLOUR_THRESHOLD 1000
 static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
-
+int colour_image = 0;
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
 bool rising_slope, falling_slope, colour_found = FALSE;
@@ -28,13 +28,13 @@ uint16_t extract_line_width(uint8_t *buffer){
 	uint32_t mean = 0;
 	bool variable = FALSE;
 	static uint16_t last_width = PXTOCM/GOAL_DISTANCE;
-
+	uint16_t last_line_position = 0;
 	//performs an average
 	for(uint16_t i = 0 ; i < IMAGE_BUFFER_SIZE ; i++){
 		mean += buffer[i];
 	}
 	mean /= IMAGE_BUFFER_SIZE;
-	if (buffer[IMAGE_BUFFER_SIZE]<100 && buffer[IMAGE_BUFFER_SIZE]>60){
+	if (buffer[IMAGE_BUFFER_SIZE]<120 && buffer[IMAGE_BUFFER_SIZE]>80){
 		colour_found = TRUE;
 	}
 	else{
@@ -127,11 +127,12 @@ uint16_t extract_line_width(uint8_t *buffer){
 		begin = 0;
 		end = 0;
 		width = last_width;
+	//	line_position = last_line_position;
 		variable = FALSE;
 	}else{
 		variable = FALSE;
 		last_width = width = (end - begin);
-		line_position = (begin + end)/2; //gives the line position.
+		last_line_position = line_position = (begin + end)/2; //gives the line position.
 	}
 
 	//sets a maximum width or returns the measured width
@@ -141,6 +142,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 		return width;
 	}
 }
+
 static THD_WORKING_AREA(waCaptureImage, 256);
 static THD_FUNCTION(CaptureImage, arg) {
 
@@ -152,7 +154,10 @@ static THD_FUNCTION(CaptureImage, arg) {
 	dcmi_enable_double_buffering();
 	dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
 	dcmi_prepare();
-
+	//chThdSleepMilliseconds(1000);
+	//po8030_set_awb(0);
+	//po8030_set_ae(0);
+	//po8030_set_exposure(128, 0);
     while(1){
         //starts a capture
 		dcmi_capture_start();
@@ -181,33 +186,49 @@ static THD_FUNCTION(ProcessImage, arg) {
         chBSemWait(&image_ready_sem);
 		//gets the pointer to the array filled with the last image in RGB565    
 		img_buff_ptr = dcmi_get_last_image_ptr();
-		switch (get_colour_detected()){
+
+		//Extracts only the red pixels
+		/*switch (colour_image){
 			case BLUE:
 				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
 					image[i/2] = (uint8_t)img_buff_ptr[i+1]&0x1F;
+
 				}
 				break;
 			case RED:
 				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
 					//extracts first 5bits of the first byte
 					//takes nothing from the second byte
-					image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
+					//image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
+					image[i/2] = (uint8_t)img_buff_ptr[i+1]&0x1F;
+
 				}
 				break;
-			case GREEN://A VERIFIER LA COULEUR VERTE!!!
+			case GREEN1://A VERIFIER LA COULEUR VERTE!!!
 				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
 					//extracts first 5bits of the first byte
 					//takes nothing from the second byte
-					image[i/2] = ((uint8_t)img_buff_ptr[i+1]&0xE0)+((uint8_t)img_buff_ptr[i]&0x8);
+					//image[i/2] = ((((uint8_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint8_t)img_buff_ptr[i]&0x7)<<3));
+					image[i/2] = (uint8_t)img_buff_ptr[i+1]&0x1F;
 				}
 				break;
-			default:
+			case GREEN2://A VERIFIER LA COULEUR VERTE!!!
 				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
 					//extracts first 5bits of the first byte
 					//takes nothing from the second byte
-					image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
+					//image[i/2] = ((((uint8_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint8_t)img_buff_ptr[i]&0x7)<<3));
+					image[i/2] = (uint8_t)img_buff_ptr[i+1]&0x1F;
+
 				}
+				break;
+
+		}*/
+		for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
+			image[i/2] = ((uint8_t)img_buff_ptr[i+1]&0x1F)<<3;
+			//image[i/2] = ((((uint8_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint8_t)img_buff_ptr[i]&0x7)<<3));
+
 		}
+
 		//search for a line in the image and gets its width in pixels
 		lineWidth = extract_line_width(image);
 		//chprintf((BaseSequentialStream *)&SD3, " lineWidth = %f\n\r", lineWidth);
@@ -251,4 +272,10 @@ bool get_colour_status(void){
 }
 uint16_t get_line_width(void){
 	return lineWidth;
+}
+void set_color(int color){
+	colour_image=color;
+}
+int get_colour(void){
+	return colour_image;
 }
