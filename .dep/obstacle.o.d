@@ -147,7 +147,7 @@ build/obj/obstacle.o: obstacle.c obstacle.h \
  ../e-puck2_main-processor/src/audio/play_melody.h \
  ../e-puck2_main-processor/src/audio/play_sound_file.h \
  ../e-puck2_main-processor/src/audio/audio_thread.h \
- ../e-puck2_main-processor/src/leds.h process_image.h
+ ../e-puck2_main-processor/src/leds.h process_image.h audio_processing.h
 
 obstacle.h:
 
@@ -456,3 +456,5 @@ c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\lib\gcc
 ../e-puck2_main-processor/src/leds.h:
 
 process_image.h:
+
+audio_processing.h:

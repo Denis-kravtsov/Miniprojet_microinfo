@@ -136,7 +136,7 @@ build/obj/process_image.o: process_image.c \
  c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\arm-none-eabi\include\machine\stdlib.h \
  c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\arm-none-eabi\include\alloca.h \
  ../e-puck2_main-processor/src/camera/po8030.h audio_processing.h \
- process_image.h
+ process_image.h ../e-puck2_main-processor/src/leds.h
 
 ../e-puck2_main-processor/ChibiOS//os/rt/include/ch.h:
 
@@ -421,3 +421,5 @@ c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\arm-non
 audio_processing.h:
 
 process_image.h:
+
+../e-puck2_main-processor/src/leds.h:

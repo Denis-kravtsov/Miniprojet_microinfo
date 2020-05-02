@@ -12,13 +12,13 @@
 #include <audio/microphone.h>
 #include "sensors/proximity.h"
 #include <camera/po8030.h>
-
+#include "spi_comm.h"
 #include <obstacle.h>
 #include <audio_processing.h>
 #include <fft.h>
 #include <process_image.h>
 #include <arm_math.h>
-
+#include "leds.h"
 //uncomment to send the FFTs results from the real microphones
 #define SEND_FROM_MIC
 
@@ -116,6 +116,7 @@ int main(void)
     	    //}
     	 }*/
     	obstacle_start();
+
     }
 }
 

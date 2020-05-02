@@ -23,7 +23,7 @@
 
 #define MIN_THRESHOLD 10
 static THD_WORKING_AREA(waObstacle, 2048);
-
+systime_t time2;
 
 static THD_FUNCTION(Obstacle, arg)
 {
@@ -36,10 +36,12 @@ static THD_FUNCTION(Obstacle, arg)
 	 int16_t prox_values_temp[8];
 	 uint8_t stop_loop = 0;
 	 systime_t time;
+
 	 volatile int16_t speed_correction = 0;
 	 int16_t corridor_approx_pos = 0;
 	 bool turn_init = FALSE;
 	 volatile int mean_prox = 0;
+	 volatile uint16_t dif_time;
 	 while(stop_loop == 0) {
 		 	mean_prox = 0;
 	    	time = chVTGetSystemTime();
@@ -57,26 +59,35 @@ static THD_FUNCTION(Obstacle, arg)
 
 	    	}
 	    	mean_prox /= 8;
+
 	    	//UNCOMMNENT THE NEEDED FUNCTION
 	    	//TEST FUNCTION GENERAL(FOR DEBUG) 1
-	    	if(((prox_values.reflected[2] < 3960) || prox_values.reflected[5] < 3960)){ //&& !(get_colour_status())){
-	      		turn_init=TRUE;
-	    		while(turn_init){
-	    		     right_motor_set_speed(0);
-	    			 left_motor_set_speed(0);
-	    			 break;
-	    		}
-	    		if(get_colour_status()){
-	    		    turn_init = FALSE;
-	    		}
+	    /*	if(((prox_values.reflected[2] > 3500) || prox_values.reflected[5] > 3500)){ //&& !(get_colour_status())){
+	      	//	turn_init=TRUE;
+   		     right_motor_set_speed(0);
+   			 left_motor_set_speed(0);
+   			 	 dif_time=time-time2;
+	 		  	if(dif_time > 2000 || !time2){
+	    		//while(turn_init){
+	    				time2 = chVTGetSystemTime();
 
-	    	}
-	    	//TEST FUNCTION GENERAL(FOR DEBUG) 2
-	    	/*if(abs(prox_values.delta[2] || prox_values.delta[5]) < mean_prox && !(get_colour_status())){
-	      		turn_init=TRUE;
-	    		while(turn_init){
-	    		     right_motor_set_speed(0);
-	    			 left_motor_set_speed(0);
+
+	    			 if(get_colour()==BLUE1){
+	    			 	    			     	 	    			set_color(RED);
+	    			 	    			     	 	    			}
+	    			 else if(get_colour()==RED){
+	    			     	 	    			set_color(GREEN);
+	    			     	 	    			break;
+	    			     	 	    			//time2 = chVTGetSystemTime();
+	    			     	 	    			// chThdSleepMilliseconds(100);
+	    			     	 	    			}
+	    			     	 	    			else if(get_colour()==GREEN){
+	    			     	 	    				set_color(RED);
+	    			     	 	    				//time2 = chVTGetSystemTime();
+	    			     	 	    				break;
+
+	    			     	 	    			//	 chThdSleepMilliseconds(100);
+	    			     	 	    			}
 	    			 break;
 	    		}
 	    		if(get_colour_status()){
@@ -84,66 +95,54 @@ static THD_FUNCTION(Obstacle, arg)
 	    		}
 
 	    	}*/
-	    	        //applies the speed from the PI regulator and the correction for the rotation
+
 	    	//TEST FUNCTION 1
-	    	/*if(((get_distance_cm_prox(prox_values.reflected[2])> 3) ||(get_distance_cm_prox(prox_values.reflected[5]) > 3)) && corridor_approx_pos < 0){ //!(get_colour_status())){
+	    	if(((prox_values.reflected[2] > 3600||(prox_values.reflected[5] > 3600)) && corridor_approx_pos < 0)){ //!(get_colour_status())){
 	    		//turn_init=TRUE;
 	    		//while(turn_init){
-	    		for(int i=0; i<4;i++){
+	    		for(int i=0; i<10;i++){
 	    			right_motor_set_speed(MOTOR_SPEED_LIMIT);
 	    			left_motor_set_speed(-MOTOR_SPEED_LIMIT);
 
-	    			 //right_motor_set_speed(MOTOR_SPEED_LIMIT/2 - ROTATION_COEFF * speed_correction);
-	    			 //left_motor_set_speed(MOTOR_SPEED_LIMIT/2 + ROTATION_COEFF * speed_correction);
-	    			 break;
+	    								 //right_motor_set_speed(MOTOR_SPEED_LIMIT/2 - ROTATION_COEFF * speed_correction);
+	    								 //left_motor_set_speed(MOTOR_SPEED_LIMIT/2 + ROTATION_COEFF * speed_correction);
+	    			//break;
 	    		}
-	    		//if(get_colour_status()){
-	    			//turn_init = FALSE;
-	    		//}
-    			if(get_colour()==RED){
-    	 	    				set_color(GREEN1);
-    	 	    			}
-    	 	    			else if(get_colour()==BLUE){
-    	 	    				set_color(GREEN2);
-    	 	    			}
-    	 	    			else if(get_colour()==GREEN1){
-    	 	    				set_color(BLUE);
-    	 	    			}
-    	 	    			else if(get_colour()==GREEN2){
-    	 	    				set_color(RED);
-    	 	    			}
+		 		  if(!time2){
+		 			  time2=chVTGetSystemTime();
+		 		  }
+	    		dif_time = time-time2;
+	    		if(dif_time > 2000){
+	    			time2 = chVTGetSystemTime();
+	    			switch_colour();
+	    		}
+    	 	    		//	else if(get_colour()==BLUE2){
+    	 	    			//	set_color(RED);
+    	 	    			//}
 
-	    	}*/
+	    	}
 	    	//TEST FUNCTION 2
-	    	/*if((get_line_width()>IMAGE_BUFFER_SIZE/2) && (((prox_values.delta[2] < 50) || (prox_values.delta[5] < 50)))){
-	    		 right_motor_set_speed(MOTOR_SPEED_LIMIT/2 - ROTATION_COEFF * speed_correction);
-	    		left_motor_set_speed(MOTOR_SPEED_LIMIT/2 + ROTATION_COEFF * speed_correction);
-	    	}*/
-	 	 	 /*else if(((get_distance_cm_prox(prox_values.reflected[2])> 3) ||(get_distance_cm_prox(prox_values.reflected[5]) > 3)) && corridor_approx_pos > 0){ //!(get_colour_status())){
-	 	    		//turn_init=TRUE;
-	 	    		//while(turn_init){
-	 	    		for(int i=0; i<10;i++){
-	 	    			right_motor_set_speed(-MOTOR_SPEED_LIMIT);
-	 	    			left_motor_set_speed(MOTOR_SPEED_LIMIT);
-	 	    			 //right_motor_set_speed(MOTOR_SPEED_LIMIT/2 - ROTATION_COEFF * speed_correction);
-	 	    			 //left_motor_set_speed(MOTOR_SPEED_LIMIT/2 + ROTATION_COEFF * speed_correction);
-	 	    			break;
-	 	    		}
-	 	    		//if(get_colour_status()){
-	 	    			//turn_init = FALSE;
-	 	    			    			if(get_colour()==RED){
-	    				set_color(GREEN1);
-	    			}
-	    			else if(get_colour()==BLUE){
-	    				set_color(GREEN2);
-	    			}
-	    			else if(get_colour()==GREEN1){
-	    				set_color(BLUE);
-	    			}
-	    			else if(get_colour()==GREEN2){
-	    				set_color(RED);
-	    			}
-	 	 	 }*/
+	 	  else if(((prox_values.reflected[2] > 3600) ||(prox_values.reflected[2] > 3600)) && corridor_approx_pos > 0){ //!(get_colour_status())){
+
+	 		for(int i=0; i<10;i++){
+	 			right_motor_set_speed(-MOTOR_SPEED_LIMIT);
+	 			left_motor_set_speed(MOTOR_SPEED_LIMIT);
+	 									 //right_motor_set_speed(MOTOR_SPEED_LIMIT/2 - ROTATION_COEFF * speed_correction);
+	 									 //left_motor_set_speed(MOTOR_SPEED_LIMIT/2 + ROTATION_COEFF * speed_correction);
+	 			break;
+	 		}
+	 		dif_time = time-time2;
+	 		  if(!time2){
+	 			  time2=chVTGetSystemTime();
+	 		  }
+	 		  if(dif_time > 2000){
+	 			 time2 = chVTGetSystemTime();
+	 			 switch_colour();
+						//else if(get_colour()==BLUE2){
+							//set_color(RED);
+						//}
+			}
+	 	  }
 	    	else{
 		 	 	messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
 			    leftSpeed = MOTOR_SPEED_LIMIT - prox_values.delta[0]*2 - prox_values.delta[1];
@@ -168,4 +167,18 @@ int get_distance_cm_prox(int prox_values){
 	int cm = 0;
 		cm = -0.0174*prox_values + 71.274;
 	return cm;
+}
+void switch_colour(void){
+	if(get_colour()==RED){
+		set_color(GREEN);
+		//break;
+	}
+	else if(get_colour()==BLUE1){
+		set_color(GREEN);
+		//break;
+	}
+	else if(get_colour()==GREEN){
+		set_color(RED);
+		//break;
+	}
 }

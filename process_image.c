@@ -7,11 +7,11 @@
 #include <camera/po8030.h>
 #include <audio_processing.h>
 #include <process_image.h>
-
+#include "leds.h"
 #define COLOUR_THRESHOLD 1000
 static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
-int colour_image = 0;
+int colour_image=1;
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
 bool rising_slope, falling_slope, colour_found = FALSE;
@@ -27,7 +27,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 	uint8_t stop = 0, wrong_line = 0, line_not_found = 0;
 	uint32_t mean = 0;
 	bool variable = FALSE;
-	static uint16_t last_width = PXTOCM/GOAL_DISTANCE;
+	static uint16_t last_width = 0;
 	uint16_t last_line_position = 0;
 	//performs an average
 	for(uint16_t i = 0 ; i < IMAGE_BUFFER_SIZE ; i++){
@@ -188,46 +188,54 @@ static THD_FUNCTION(ProcessImage, arg) {
 		img_buff_ptr = dcmi_get_last_image_ptr();
 
 		//Extracts only the red pixels
-		/*switch (colour_image){
-			case BLUE:
+		switch (colour_image){
+			case BLUE1:
 				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-					image[i/2] = (uint8_t)img_buff_ptr[i+1]&0x1F;
+					//image[i/2] = (uint8_t)img_buff_ptr[i+1]&0x1F;
+					image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
 
 				}
+
+
 				break;
 			case RED:
 				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
 					//extracts first 5bits of the first byte
 					//takes nothing from the second byte
-					//image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
-					image[i/2] = (uint8_t)img_buff_ptr[i+1]&0x1F;
-
+					image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
+					//image[i/2] = (uint8_t)img_buff_ptr[i+1]&0x1F;
+					set_front_led(1);
+					set_body_led(0);
 				}
+
 				break;
-			case GREEN1://A VERIFIER LA COULEUR VERTE!!!
+			case GREEN://A VERIFIER LA COULEUR VERTE!!!
 				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
 					//extracts first 5bits of the first byte
 					//takes nothing from the second byte
-					//image[i/2] = ((((uint8_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint8_t)img_buff_ptr[i]&0x7)<<3));
-					image[i/2] = (uint8_t)img_buff_ptr[i+1]&0x1F;
+					image[i/2] = ((((uint8_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint8_t)img_buff_ptr[i]&0x7)<<3))<<2;
+					//image[i/2] = (uint8_t)img_buff_ptr[i+1]&0x1F;
+					set_body_led(1);
+					set_front_led(0);
 				}
+
 				break;
-			case GREEN2://A VERIFIER LA COULEUR VERTE!!!
+		/*	case BLUE2://A VERIFIER LA COULEUR VERTE!!!
 				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
 					//extracts first 5bits of the first byte
 					//takes nothing from the second byte
-					//image[i/2] = ((((uint8_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint8_t)img_buff_ptr[i]&0x7)<<3));
+					//image[i/2] = ((((uint8_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint8_t)img_buff_ptr[i]&0x7)<<3))<<2;
 					image[i/2] = (uint8_t)img_buff_ptr[i+1]&0x1F;
 
-				}
+				}*/
 				break;
-
-		}*/
-		for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-			image[i/2] = ((uint8_t)img_buff_ptr[i+1]&0x1F)<<3;
-			//image[i/2] = ((((uint8_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint8_t)img_buff_ptr[i]&0x7)<<3));
 
 		}
+		//for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
+			//image[i/2] = ((uint8_t)img_buff_ptr[i+1]&0x1F)<<3;
+			//image[i/2] = ((((uint8_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint8_t)img_buff_ptr[i]&0x7)<<3))<<2;
+			//image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
+	//	}
 
 		//search for a line in the image and gets its width in pixels
 		lineWidth = extract_line_width(image);

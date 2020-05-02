@@ -9,7 +9,7 @@
 #define OBSTACLE_H_
 #include "sensors/proximity.h"
 void obstacle_start(void);
-
+void switch_colour(void);
 void avoidance_logic(proximity_msg_t data);
 int get_distance_cm_prox(int prox_values);
 

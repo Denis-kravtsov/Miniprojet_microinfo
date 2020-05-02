@@ -25,10 +25,10 @@ typedef enum {
 } BUFFER_NAME_t;
 
 enum {
-	BLUE = 0,
+	BLUE1 = 0,
 	RED,
-	GREEN1,
-	GREEN2
+	GREEN,
+	BLUE2
 };
 
 void processAudioData(int16_t *data, uint16_t num_samples);
