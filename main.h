@@ -11,7 +11,7 @@ extern "C" {
 
 #define IMAGE_BUFFER_SIZE		640
 #define WIDTH_SLOPE				5
-#define MIN_LINE_WIDTH			40
+#define MIN_LINE_WIDTH			20
 #define ROTATION_THRESHOLD		10
 #define ROTATION_COEFF			4
 #define PXTOCM					1570.0f //experimental value
@@ -23,6 +23,7 @@ extern messagebus_t bus;
 
 extern parameter_namespace_t parameter_root;
 void status(bool status);
+bool acquire_status(void);
 void direction(bool status);
 void change(bool status);
 void SendUint8ToComputer(uint8_t* data, uint16_t size) ;

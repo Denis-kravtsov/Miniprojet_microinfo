@@ -13,7 +13,7 @@
 #include <motors.h>
 #include <audio/microphone.h>
 #include <audio_processing.h>
-
+#include <process_image.h>
 #include <fft.h>
 #include <arm_math.h>
 
@@ -34,12 +34,14 @@ static float micBack_output[FFT_SIZE];
 #define MIN_VALUE_THRESHOLD	10000
 
 #define MIN_FREQ		10	//we don't analyze before this index to not use resources for nothing
-#define FREQ_INIT	    64	//1kHz
-
+#define FREQ_RED		58	//??1450Hz
+#define FREQ_GREEN		61	//??1525Hz
 #define MAX_FREQ		128	//we don't analyze after this index to not use resources for nothing
 
-#define FREQ_INIT_L		(FREQ_INIT-1) //adjustable
-#define FREQ_INIT_H		(FREQ_INIT+1)
+#define FREQ_RED_L		(FREQ_RED-1)
+#define FREQ_RED_H		(FREQ_RED+1)
+#define FREQ_GREEN_L	(FREQ_GREEN-1)
+#define FREQ_GREEN_H	(FREQ_GREEN+1)
 
 uint8_t colour;
 /*
@@ -58,11 +60,21 @@ void sound_remote(float* data){
 		}
 	}
 
-	//turn
-	if(max_norm_index >= FREQ_INIT_L && max_norm_index <= FREQ_INIT_H){
-		status(TRUE);
-		//set_colour = BLACK;
-	}
+	//red street
+		if(max_norm_index >=FREQ_RED_L && max_norm_index <= FREQ_RED_H){
+			status(TRUE);
+			set_color(RED1);
+		}
+		//green street
+		else if(max_norm_index >= FREQ_GREEN_L && max_norm_index <= FREQ_GREEN_H){
+			status(TRUE);
+			set_color(GREEN1);
+			}
+		else if(max_norm_index>=MAX_FREQ - 9 && max_norm_index <= MAX_FREQ - 7){
+			status(FALSE);
+ 			right_motor_set_speed(0);
+ 			left_motor_set_speed(0);
+		}
 }
 
 /*
@@ -147,12 +159,13 @@ void processAudioData(int16_t *data, uint16_t num_samples){
 		sound_remote(micLeft_output);
 	}
 }
+
 void wait_send_to_computer(void){
 	chBSemWait(&sendToComputer_sem);
 }
 
 
-float* get_audio_buffer_ptr(BUFFER_NAME_t name){
+/*float* get_audio_buffer_ptr(BUFFER_NAME_t name){
 	if(name == LEFT_CMPLX_INPUT){
 		return micLeft_cmplx_input;
 	}
@@ -180,9 +193,9 @@ float* get_audio_buffer_ptr(BUFFER_NAME_t name){
 	else{
 		return NULL;
 	}
-}
+}*/
 
-void audio_detection(float *micleft, float *micright, float *micfront, float *micback,
+/*void audio_detection(float *micleft, float *micright, float *micfront, float *micback,
 					 float *micLeft_mag, float *micFront_mag){
 	float max_norm_left = MIN_VALUE_THRESHOLD;
 	float max_norm_front = MIN_VALUE_THRESHOLD;
@@ -221,8 +234,7 @@ void audio_detection(float *micleft, float *micright, float *micfront, float *mi
 	arg_diff_fb = arg_micFront-arg_micBack;
 	int16_t arg_diff_side_deg = (180/PI)*arg_diff_side;
 	int16_t arg_diff_fb_deg = (180/PI)*arg_diff_fb;
-
-}
+}*/
 
 uint8_t get_colour_detected(void){
 	return colour;

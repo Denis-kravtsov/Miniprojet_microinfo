@@ -9,9 +9,11 @@
 #include <process_image.h>
 #include "leds.h"
 #define COLOUR_THRESHOLD 1000
+#define ADJUSTED_MEAN 20
 static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
-int colour_image=1;
+
+int colour_image=-1;
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
 bool rising_slope, falling_slope, colour_found = FALSE;
@@ -23,8 +25,8 @@ uint16_t lineWidth = 0;
 uint16_t extract_line_width(uint8_t *buffer){
 
 	volatile uint16_t i = 0;
-	uint16_t begin = 0, end = 0, width = 0;
 	uint8_t stop = 0, wrong_line = 0, line_not_found = 0;
+	uint16_t begin = 0, end = 0, width = 0;
 	uint32_t mean = 0;
 	bool variable = FALSE;
 	static uint16_t last_width = 0;
@@ -34,7 +36,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 		mean += buffer[i];
 	}
 	mean /= IMAGE_BUFFER_SIZE;
-	if (buffer[IMAGE_BUFFER_SIZE]<120 && buffer[IMAGE_BUFFER_SIZE]>80){
+	if (buffer[IMAGE_BUFFER_SIZE/2]<160 && buffer[IMAGE_BUFFER_SIZE/2]>60){
 		colour_found = TRUE;
 	}
 	else{
@@ -47,25 +49,15 @@ uint16_t extract_line_width(uint8_t *buffer){
 			i=0;
 		//search for a begin
 		//line_not_found = 1;
-		/*chprintf((BaseSequentialStream *)&SD3, " line_not_found1 = %f\n\r", line_not_found);
-		chprintf((BaseSequentialStream *)&SD3, " begin1 = %f\n\r", begin);
-		chprintf((BaseSequentialStream *)&SD3, " end1 = %f\n\r", end);
-		chprintf((BaseSequentialStream *)&SD3, " stop1 = %f\n\r", stop);
-		chprintf((BaseSequentialStream *)&SD3, " mean1 = %f\n\r", mean);*/
-		/*volatile uint8_t debug_buffer[IMAGE_BUFFER_SIZE/4];
-		for(int j = 0; j<IMAGE_BUFFER_SIZE; j+=4)
-			debug_buffer[j/4] = buffer[j];*/
-		while(stop == 0 && i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE))
-		{ 
+
+		while(stop == 0 && i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE)){
 			//the slope must at least be WIDTH_SLOPE wide and is compared
 		    //to the mean of the image
-		    if(buffer[i] > mean+20 && buffer[i+WIDTH_SLOPE] < mean)
-		    {
-		        begin = i;
-		       // chprintf((BaseSequentialStream *)&SD3, " begin = %f\n\r", begin);
-		        stop = 1;
+		    if(buffer[i] > mean + ADJUSTED_MEAN && buffer[i+WIDTH_SLOPE] < mean){
+		    	begin = i;
+		    	stop = 1;
 		        falling_slope = TRUE;
-		       variable = TRUE;
+		        variable = TRUE;
 		    }
 		    i++;
 		}
@@ -75,43 +67,31 @@ uint16_t extract_line_width(uint8_t *buffer){
 		if (i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE)){
 		    stop = 0;
 		    
-		    while(stop == 0 && i < IMAGE_BUFFER_SIZE - WIDTH_SLOPE)
-		    {
-		        if(buffer[i] < mean && buffer[i+WIDTH_SLOPE] > mean+20)
-		        {
-		            end = i;
-		            //chprintf((BaseSequentialStream *)&SD3, " end = %f\n\r", end);
+		    while(stop == 0 && i < IMAGE_BUFFER_SIZE - WIDTH_SLOPE){
+		        if(buffer[i] < mean && buffer[i+WIDTH_SLOPE] > mean + ADJUSTED_MEAN){
+		        	end = i;
 		            stop = 1;
 		            rising_slope = TRUE;
-		        }
-		        i++;
+		        }i++;
 		    }
-
-
-		    //if an end was not found
 		}
-		if(i < (IMAGE_BUFFER_SIZE ) && (!end) && begin){//A VERIFIER!!!
+
+		if(i < (IMAGE_BUFFER_SIZE ) && (!end) && begin){  //if an end was not found
 		    	end = IMAGE_BUFFER_SIZE;
-		    	//chprintf((BaseSequentialStream *)&SD3, " end = %f\n\r", end);
 		    	stop = 1;
 		    	rising_slope = FALSE;
 		    }
-		if(i < (IMAGE_BUFFER_SIZE ) && end && !begin){ //if no begin found but an end was found
+		if(i < (IMAGE_BUFFER_SIZE ) && end && !begin){  //if no begin found but an end was found
 			begin = 1;
 			falling_slope = FALSE;
 		}
-		else if (i > IMAGE_BUFFER_SIZE || (!end && !begin))//if no begin and no end was found
-		{
+		else if (i > IMAGE_BUFFER_SIZE || (!end && !begin)){  //if no begin and no end was found
 		    line_not_found = 1;
 		    falling_slope = FALSE;
 		    rising_slope = FALSE;
 		   // colour_found = TRUE; //A VERIFIER!!!
 		}
-		/*chprintf((BaseSequentialStream *)&SD3, " line_not_found2 = %f\n\r", line_not_found);
-		chprintf((BaseSequentialStream *)&SD3, " begin2 = %f\n\r", begin);
-		chprintf((BaseSequentialStream *)&SD3, " end2 = %f\n\r", end);
-		chprintf((BaseSequentialStream *)&SD3, " stop2 = %f\n\r", stop);
-		chprintf((BaseSequentialStream *)&SD3, " mean2 = %f\n\r", mean);*/
+
 		//if a line too small has been detected, continues the search
 		if(!line_not_found && (end-begin) < MIN_LINE_WIDTH){
 			i = end;
@@ -127,7 +107,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 		begin = 0;
 		end = 0;
 		width = last_width;
-	//	line_position = last_line_position;
+		line_position = last_line_position;
 		variable = FALSE;
 	}else{
 		variable = FALSE;
@@ -150,14 +130,14 @@ static THD_FUNCTION(CaptureImage, arg) {
     (void)arg;
 
 	//Takes pixels 0 to IMAGE_BUFFER_SIZE of the line 10 + 11 (minimum 2 lines because reasons)
-	po8030_advanced_config(FORMAT_RGB565, 0, 10, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
+	po8030_advanced_config(FORMAT_RGB565, 0, 20, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 	dcmi_enable_double_buffering();
 	dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
 	dcmi_prepare();
 	//chThdSleepMilliseconds(1000);
 	//po8030_set_awb(0);
 	//po8030_set_ae(0);
-	//po8030_set_exposure(128, 0);
+	//po8030_set_exposure(80, 0);
     while(1){
         //starts a capture
 		dcmi_capture_start();
@@ -187,49 +167,43 @@ static THD_FUNCTION(ProcessImage, arg) {
 		//gets the pointer to the array filled with the last image in RGB565    
 		img_buff_ptr = dcmi_get_last_image_ptr();
 
-		//Extracts only the red pixels
+
 		switch (colour_image){
-			case BLUE1:
-				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-					//image[i/2] = (uint8_t)img_buff_ptr[i+1]&0x1F;
-					image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
-
-				}
-
-
-				break;
-			case RED:
+				//Extracts only the red pixels
+			case RED1:
 				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
 					//extracts first 5bits of the first byte
 					//takes nothing from the second byte
 					image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
-					//image[i/2] = (uint8_t)img_buff_ptr[i+1]&0x1F;
-					set_front_led(1);
 					set_body_led(0);
+					set_front_led(1);
 				}
-
 				break;
-			case GREEN://A VERIFIER LA COULEUR VERTE!!!
+			case RED2:
 				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-					//extracts first 5bits of the first byte
-					//takes nothing from the second byte
+					image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
+					set_front_led(1);
+					set_body_led(1);
+				}
+				break;
+				//Extracts only the green pixels
+			case GREEN1:
+				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
+					//extracts last 3bits of the first byte and first 3bits of the second byte,
+					//put them together in a unique byte and store them in the first six places of the byte
 					image[i/2] = ((((uint8_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint8_t)img_buff_ptr[i]&0x7)<<3))<<2;
-					//image[i/2] = (uint8_t)img_buff_ptr[i+1]&0x1F;
 					set_body_led(1);
 					set_front_led(0);
 				}
 
 				break;
-		/*	case BLUE2://A VERIFIER LA COULEUR VERTE!!!
+			case GREEN2:
 				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-					//extracts first 5bits of the first byte
-					//takes nothing from the second byte
-					//image[i/2] = ((((uint8_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint8_t)img_buff_ptr[i]&0x7)<<3))<<2;
-					image[i/2] = (uint8_t)img_buff_ptr[i+1]&0x1F;
-
-				}*/
+					image[i/2] = ((((uint8_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint8_t)img_buff_ptr[i]&0x7)<<3))<<2;
+					set_body_led(1);
+					set_front_led(1);
+				}
 				break;
-
 		}
 		//for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
 			//image[i/2] = ((uint8_t)img_buff_ptr[i+1]&0x1F)<<3;
@@ -239,7 +213,6 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 		//search for a line in the image and gets its width in pixels
 		lineWidth = extract_line_width(image);
-		//chprintf((BaseSequentialStream *)&SD3, " lineWidth = %f\n\r", lineWidth);
 		//converts the width into a distance between the robot and the camera
 		if(lineWidth){
 			distance_cm = PXTOCM/lineWidth;
@@ -254,9 +227,9 @@ static THD_FUNCTION(ProcessImage, arg) {
     }
 }
 
-float get_distance_cm(void){
+/*float get_distance_cm(void){
 	return distance_cm;
-}
+}*/
 
 uint16_t get_line_position(void){
 	return line_position;

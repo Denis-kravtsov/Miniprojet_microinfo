@@ -138,7 +138,7 @@ build/obj/audio_processing.o: audio_processing.c \
  ../e-puck2_main-processor/src/motors.h \
  ../e-puck2_main-processor/src/audio/microphone.h \
  ../e-puck2_main-processor/src/audio/mp45dt02_processing.h \
- audio_processing.h fft.h \
+ audio_processing.h process_image.h fft.h \
  ../e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/arm_math.h \
  ../e-puck2_main-processor/ChibiOS//os/ext/CMSIS/include/core_cm4.h \
  c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\arm-none-eabi\include\string.h \
@@ -432,6 +432,8 @@ c:\eclipse\eclipse_e-puck2\tools\gcc-arm-none-eabi-7-2017-q4-major-win32\lib\gcc
 ../e-puck2_main-processor/src/audio/mp45dt02_processing.h:
 
 audio_processing.h:
+
+process_image.h:
 
 fft.h:
 
