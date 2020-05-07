@@ -13,11 +13,12 @@
 static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
 
-int colour_image=-1;
+int colour_image=0;
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
 bool rising_slope, falling_slope, colour_found = FALSE;
 uint16_t lineWidth = 0;
+int16_t temp = 0;
 /*
  *  Returns the line's width extracted from the image buffer given
  *  Returns 0 if line not found
@@ -130,14 +131,18 @@ static THD_FUNCTION(CaptureImage, arg) {
     (void)arg;
 
 	//Takes pixels 0 to IMAGE_BUFFER_SIZE of the line 10 + 11 (minimum 2 lines because reasons)
-	po8030_advanced_config(FORMAT_RGB565, 0, 20, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
+	po8030_advanced_config(FORMAT_RGB565, 0, 10, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 	dcmi_enable_double_buffering();
 	dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
 	dcmi_prepare();
 	//chThdSleepMilliseconds(1000);
-	//po8030_set_awb(0);
+	po8030_set_awb(0);
 	//po8030_set_ae(0);
-	//po8030_set_exposure(80, 0);
+	//po8030_set_exposure(64, 0);
+	//po8030_set_contrast(128);
+	po8030_set_rgb_gain(0x6D, 0x7F, 0x0);
+	//po8030_set_brightness(0);
+
     while(1){
         //starts a capture
 		dcmi_capture_start();
@@ -191,7 +196,12 @@ static THD_FUNCTION(ProcessImage, arg) {
 				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
 					//extracts last 3bits of the first byte and first 3bits of the second byte,
 					//put them together in a unique byte and store them in the first six places of the byte
-					image[i/2] = ((((uint8_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint8_t)img_buff_ptr[i]&0x7)<<3))<<2;
+					temp = (((((((uint16_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint16_t)img_buff_ptr[i]&0x7)<<3))<<2))) - ((uint8_t)img_buff_ptr[i]&0xF8);
+					if(temp<=0){
+						image[i/2] = 0;
+					}
+					else
+						image[i/2] = temp;
 					set_body_led(1);
 					set_front_led(0);
 				}
@@ -199,7 +209,13 @@ static THD_FUNCTION(ProcessImage, arg) {
 				break;
 			case GREEN2:
 				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-					image[i/2] = ((((uint8_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint8_t)img_buff_ptr[i]&0x7)<<3))<<2;
+					temp = (((((((uint16_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint16_t)img_buff_ptr[i]&0x7)<<3))<<2))) - ((uint8_t)img_buff_ptr[i]&0xF8);
+								 //+ ((((((uint8_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint8_t)img_buff_ptr[i]&0x7)<<3))<<2)&0x80);
+					if(temp<80){
+						image[i/2] = 0;
+					}
+					else
+						image[i/2] = 250;
 					set_body_led(1);
 					set_front_led(1);
 				}
@@ -260,3 +276,5 @@ void set_color(int color){
 int get_colour(void){
 	return colour_image;
 }
+
+

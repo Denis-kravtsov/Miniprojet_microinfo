@@ -77,12 +77,12 @@ int main(void)
 
 	process_image_start();
 
-   	obstacle_start();
 
 
 
 
-#ifdef SEND_FROM_MIC
+
+/*#ifdef SEND_FROM_MIC
     //starts the microphones processing thread.
     //it calls the callback given in parameter when samples are ready
     mic_start(&processAudioData);
@@ -90,7 +90,7 @@ int main(void)
 
     /* Infinite loop. */
     while (1) {
-    	 chThdSleepMilliseconds(100);
+    	/* chThdSleepMilliseconds(100);
 
     	if(!initialised){
 #ifdef SEND_FROM_MIC
@@ -98,10 +98,11 @@ int main(void)
         wait_send_to_computer();
 
 #endif  /* SEND_FROM_MIC */
-    	}
-    	else{
+    	//}
+    	//else{
     		chThdSleepMilliseconds(100);
-    	}
+    		obstacle_start();
+    	//}
     }
 }
 

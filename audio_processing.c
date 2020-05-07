@@ -70,11 +70,11 @@ void sound_remote(float* data){
 			status(TRUE);
 			set_color(GREEN1);
 			}
-		else if(max_norm_index>=MAX_FREQ - 9 && max_norm_index <= MAX_FREQ - 7){
+		/*else if(max_norm_index>=MAX_FREQ - 9 && max_norm_index <= MAX_FREQ - 7){
 			status(FALSE);
  			right_motor_set_speed(0);
  			left_motor_set_speed(0);
-		}
+		}*/
 }
 
 /*
