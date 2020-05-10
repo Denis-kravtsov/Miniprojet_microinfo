@@ -1,8 +1,8 @@
 /*
  * audio_processing.c
  *
- *  Created on: 3 апр. 2020 г.
- *      Author: денчик
+ *  Created on: 3 пїЅпїЅпїЅ. 2020 пїЅ.
+ *      Author: пїЅпїЅпїЅпїЅпїЅпїЅ
  */
 #include "ch.h"
 #include "hal.h"
@@ -32,10 +32,10 @@ static float micBack_output[FFT_SIZE];
 
 #define MIN_VALUE_THRESHOLD	10000
 
-#define MIN_FREQ		256	//we don't analyze before this index to not use resources for nothing
-#define FREQ_RED		320	//1500Hz
-#define FREQ_GREEN		384	//1000Hz
-#define MAX_FREQ		448	//we don't analyze after this index to not use resources for nothing
+#define MIN_FREQ		256	//4kHz,we don't analyze before this index to not use resources for nothing
+#define FREQ_RED		320	//5kHz
+#define FREQ_GREEN		384	//6kHz
+#define MAX_FREQ		448	//7kHz,we don't analyze after this index to not use resources for nothing
 
 #define FREQ_RED_L		(FREQ_RED-1)
 #define FREQ_RED_H		(FREQ_RED+1)
