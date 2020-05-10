@@ -91,10 +91,6 @@ int main(void)
 	dac_start();
     /* Infinite loop. */
     while (1) {
-#ifdef SEND_FROM_MIC
-        //waits until a result must be sent to the computer
-        wait_send_to_computer();
-#endif  /* SEND_FROM_MIC */
     	chThdSleepMilliseconds(100);
     }
 

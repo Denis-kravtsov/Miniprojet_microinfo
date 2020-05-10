@@ -47,7 +47,7 @@ void extract_line_width(uint8_t *buffer){
 		//search for a begin
 		while(stop == 0 && i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE)){
 			//the slope must at least be WIDTH_SLOPE wide and is compared
-		    //to the mean of the image and the mean and some adjustement value
+		    //to the mean of the image and the mean and some adjustment value
 		    if(buffer[i] > mean + ADJUSTED_MEAN && buffer[i+WIDTH_SLOPE] < mean){
 		    	begin = i;
 		    	stop = 1;
@@ -72,12 +72,12 @@ void extract_line_width(uint8_t *buffer){
 		        i++;
 		    }
 		}
-		//if an no end was found but begin was found
+		//if an no end was found but begin was found, forces end to 640
 		if(i < (IMAGE_BUFFER_SIZE) && (!end) && begin){
 		    	end = IMAGE_BUFFER_SIZE;
 		    	rising_slope = FALSE;
 		}
-		 //if no begin found but an end was found
+		 //if no begin found but an end was found, forces begin to 1
 		if(i < (IMAGE_BUFFER_SIZE) && end && !begin){
 			begin = 1;
 			falling_slope = FALSE;
@@ -113,7 +113,7 @@ void extract_line_width(uint8_t *buffer){
 	}
 }
 
-static THD_WORKING_AREA(waCaptureImage, 256);
+static THD_WORKING_AREA(waCaptureImage, 512);
 static THD_FUNCTION(CaptureImage, arg) {
 
     chRegSetThreadName(__FUNCTION__);
@@ -140,7 +140,7 @@ static THD_FUNCTION(CaptureImage, arg) {
 }
 
 
-static THD_WORKING_AREA(waProcessImage, 1024);
+static THD_WORKING_AREA(waProcessImage, 2048);
 static THD_FUNCTION(ProcessImage, arg) {
 
     chRegSetThreadName(__FUNCTION__);

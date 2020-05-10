@@ -22,6 +22,9 @@
 #include <audio_processing.h>
 
 #define MIN_THRESHOLD 		10
+/*
+ * The following values were determined experimentally
+ */
 #define TURN_TIME			2000
 #define CIRCUIT_TIME		1500
 #define DIRECTION_LEFT		-300
@@ -30,11 +33,12 @@
 #define IR_LEFT_T			5
 #define IR_RIGHT_TURN		4.5
 #define IR_LEFT_TURN		5.5
+#define DETECTION_DISTANCE	4
 
 static	uint8_t status = 0;
 
 
-static THD_WORKING_AREA(waObstacle, 1024);
+static THD_WORKING_AREA(waObstacle, 2048);
 
 static THD_FUNCTION(Obstacle, arg){
 	(void) arg;
@@ -54,6 +58,11 @@ static THD_FUNCTION(Obstacle, arg){
 	    if(get_falling_edge() && get_rising_edge()){
 	    	corridor_approx_pos = -(get_line_position() - (IMAGE_BUFFER_SIZE/2));
 	    }
+	    /*
+	     * if only falling edge is detected we force corridor_approx_pos to a negative value
+	     * if only rising edge is detected we force it to a positive value
+	     * if no edges were found we force it to 0
+	     */
 	    else if(get_falling_edge() && !get_rising_edge()){
 	    	corridor_approx_pos = DIRECTION_LEFT;
 	    }
@@ -71,7 +80,8 @@ static THD_FUNCTION(Obstacle, arg){
 				set_front_led(0);
 				set_body_led(0);
 				//checks if there are corridors on both sides of the robot(T intersection)
-				if((get_distance_cm_prox(prox_values.delta[2]) > IR_RIGHT_T) && (get_distance_cm_prox(prox_values.delta[5]) > IR_LEFT_T)){
+				if((get_distance_cm_prox(prox_values.delta[2]) > IR_RIGHT_T) && (get_distance_cm_prox(prox_values.delta[5]) > IR_LEFT_T)
+					&& !corridor_centrale){
 					//tells that the turn has been initiated
 					turn_init = TRUE;
 					//if the needed corridor is on the right, turn right
@@ -172,7 +182,7 @@ static THD_FUNCTION(Obstacle, arg){
 	 }
 }
 void obstacle_start(void){
-	chThdCreateStatic(waObstacle, sizeof(waObstacle), NORMALPRIO, Obstacle, NULL);
+	chThdCreateStatic(waObstacle, sizeof(waObstacle), NORMALPRIO + 1, Obstacle, NULL);
 }
 //conversion of prox.delta values to cm (experimental values)
 float get_distance_cm_prox(int prox_values){
@@ -194,7 +204,7 @@ int check_prox(proximity_msg_t data){
 	int count = 0;
 	//checks for the number of IR sensors that are not blocked by an object
 	for(int i=0; i<8; i++){
-		if (get_distance_cm_prox(data.delta[i]) > 4.5){
+		if (get_distance_cm_prox(data.delta[i]) > DETECTION_DISTANCE){
 			count++;
 		}
 	}
