@@ -10,6 +10,9 @@
 #include <chprintf.h>
 #include <motors.h>
 #include <audio/microphone.h>
+#include "audio/play_melody.h"
+#include "audio/play_sound_file.h"
+#include "audio/audio_thread.h"
 #include "sensors/proximity.h"
 #include <camera/po8030.h>
 #include "spi_comm.h"
@@ -19,21 +22,17 @@
 #include <process_image.h>
 #include <arm_math.h>
 #include "leds.h"
+
+
 //uncomment to send the FFTs results from the real microphones
 #define SEND_FROM_MIC
 
-static bool initialised = FALSE;
-
 messagebus_t bus;
+
 MUTEX_DECL(bus_lock);
 CONDVAR_DECL(bus_condvar);
 
-void status(bool status){
-	initialised=status;
-}
-bool acquire_status(void){
-	return initialised;
-}
+
 void SendUint8ToComputer(uint8_t* data, uint16_t size)
 {
 	chSequentialStreamWrite((BaseSequentialStream *)&SD3, (uint8_t*)"START", 5);
@@ -54,56 +53,56 @@ static void serial_start(void)
 }
 
 
-
 int main(void)
 {
     halInit();
     chSysInit();
     mpu_init();
+    messagebus_init(&bus, &bus_lock, &bus_condvar);
 
     //starts the serial communication
     serial_start();
     //starts the USB communication
     usb_start();
 
-    //inits the motors
-    motors_init();
-    //configuration camera
-    dcmi_start();
-	po8030_start();
-    messagebus_init(&bus, &bus_lock, &bus_condvar);
-
-    proximity_start();
-
-	process_image_start();
-
-
-
-
-
-
-/*#ifdef SEND_FROM_MIC
+#ifdef SEND_FROM_MIC
     //starts the microphones processing thread.
     //it calls the callback given in parameter when samples are ready
     mic_start(&processAudioData);
 #endif  /* SEND_FROM_MIC */
 
+    //inits the motors
+	motors_init();
+    //configuration camera
+    dcmi_start();
+	po8030_start();
+	//configuration leds
+    clear_leds();
+    spi_comm_start();
+
+    proximity_start();
+	process_image_start();
+	obstacle_start();
+
+	playMelodyStart();
+	playSoundFileStart();
+	dac_start();
+
+
+
+
     /* Infinite loop. */
     while (1) {
-    	/* chThdSleepMilliseconds(100);
 
-    	if(!initialised){
 #ifdef SEND_FROM_MIC
         //waits until a result must be sent to the computer
         wait_send_to_computer();
 
 #endif  /* SEND_FROM_MIC */
-    	//}
-    	//else{
+
     		chThdSleepMilliseconds(100);
-    		obstacle_start();
-    	//}
     }
+
 }
 
 #define STACK_CHK_GUARD 0xe2dee396

@@ -8,17 +8,19 @@
 #include <audio_processing.h>
 #include <process_image.h>
 #include "leds.h"
-#define COLOUR_THRESHOLD 1000
-#define ADJUSTED_MEAN 20
+
+#define COLOUR_THRESHOLD 	1000
+#define ADJUSTED_MEAN 		20
 static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
 
-int colour_image=0;
+int colour_image = -1;
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
 bool rising_slope, falling_slope, colour_found = FALSE;
 uint16_t lineWidth = 0;
 int16_t temp = 0;
+
 /*
  *  Returns the line's width extracted from the image buffer given
  *  Returns 0 if line not found
@@ -37,7 +39,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 		mean += buffer[i];
 	}
 	mean /= IMAGE_BUFFER_SIZE;
-	if (buffer[IMAGE_BUFFER_SIZE/2]<160 && buffer[IMAGE_BUFFER_SIZE/2]>60){
+	if (buffer[IMAGE_BUFFER_SIZE/2]<160 && buffer[IMAGE_BUFFER_SIZE/2]>80){
 		colour_found = TRUE;
 	}
 	else{
@@ -49,8 +51,6 @@ uint16_t extract_line_width(uint8_t *buffer){
 		if(!variable)
 			i=0;
 		//search for a begin
-		//line_not_found = 1;
-
 		while(stop == 0 && i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE)){
 			//the slope must at least be WIDTH_SLOPE wide and is compared
 		    //to the mean of the image
@@ -90,7 +90,6 @@ uint16_t extract_line_width(uint8_t *buffer){
 		    line_not_found = 1;
 		    falling_slope = FALSE;
 		    rising_slope = FALSE;
-		   // colour_found = TRUE; //A VERIFIER!!!
 		}
 
 		//if a line too small has been detected, continues the search
@@ -131,17 +130,15 @@ static THD_FUNCTION(CaptureImage, arg) {
     (void)arg;
 
 	//Takes pixels 0 to IMAGE_BUFFER_SIZE of the line 10 + 11 (minimum 2 lines because reasons)
-	po8030_advanced_config(FORMAT_RGB565, 0, 10, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
+	po8030_advanced_config(FORMAT_RGB565, 0, 20, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 	dcmi_enable_double_buffering();
 	dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
 	dcmi_prepare();
-	//chThdSleepMilliseconds(1000);
 	po8030_set_awb(0);
 	//po8030_set_ae(0);
 	//po8030_set_exposure(64, 0);
 	//po8030_set_contrast(128);
-	po8030_set_rgb_gain(0x6D, 0x7F, 0x0);
-	//po8030_set_brightness(0);
+	po8030_set_rgb_gain(0x5D, 0x7F, 0x0);
 
     while(1){
         //starts a capture
@@ -163,7 +160,6 @@ static THD_FUNCTION(ProcessImage, arg) {
 	uint8_t *img_buff_ptr;
 	uint8_t image[IMAGE_BUFFER_SIZE] = {0};
 
-
 	bool send_to_computer = true;
 
     while(1){
@@ -172,61 +168,38 @@ static THD_FUNCTION(ProcessImage, arg) {
 		//gets the pointer to the array filled with the last image in RGB565    
 		img_buff_ptr = dcmi_get_last_image_ptr();
 
-
 		switch (colour_image){
 				//Extracts only the red pixels
-			case RED1:
+			case RED:
 				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
 					//extracts first 5bits of the first byte
 					//takes nothing from the second byte
 					image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
-					set_body_led(0);
-					set_front_led(1);
-				}
-				break;
-			case RED2:
-				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-					image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
-					set_front_led(1);
-					set_body_led(1);
+					set_rgb_led(0, 10, 0, 0);
+					set_rgb_led(1, 10, 0, 0);
+					set_rgb_led(2, 10, 0, 0);
+					set_rgb_led(3, 10, 0, 0);
 				}
 				break;
 				//Extracts only the green pixels
-			case GREEN1:
-				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
+			case GREEN:
+				for(uint16_t i = 0 ; i < (2*IMAGE_BUFFER_SIZE) ; i+=2){
 					//extracts last 3bits of the first byte and first 3bits of the second byte,
 					//put them together in a unique byte and store them in the first six places of the byte
 					temp = (((((((uint16_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint16_t)img_buff_ptr[i]&0x7)<<3))<<2))) - ((uint8_t)img_buff_ptr[i]&0xF8);
-					if(temp<=0){
+					if(temp <= 0){
 						image[i/2] = 0;
 					}
 					else
 						image[i/2] = temp;
-					set_body_led(1);
-					set_front_led(0);
+					set_rgb_led(0, 0, 10, 0);
+					set_rgb_led(1, 0, 10, 0);
+					set_rgb_led(2, 0, 10, 0);
+					set_rgb_led(3, 0, 10, 0);
 				}
 
-				break;
-			case GREEN2:
-				for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-					temp = (((((((uint16_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint16_t)img_buff_ptr[i]&0x7)<<3))<<2))) - ((uint8_t)img_buff_ptr[i]&0xF8);
-								 //+ ((((((uint8_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint8_t)img_buff_ptr[i]&0x7)<<3))<<2)&0x80);
-					if(temp<80){
-						image[i/2] = 0;
-					}
-					else
-						image[i/2] = 250;
-					set_body_led(1);
-					set_front_led(1);
-				}
 				break;
 		}
-		//for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-			//image[i/2] = ((uint8_t)img_buff_ptr[i+1]&0x1F)<<3;
-			//image[i/2] = ((((uint8_t)img_buff_ptr[i+1]&0xE0)>>5)+(((uint8_t)img_buff_ptr[i]&0x7)<<3))<<2;
-			//image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
-	//	}
-
 		//search for a line in the image and gets its width in pixels
 		lineWidth = extract_line_width(image);
 		//converts the width into a distance between the robot and the camera
@@ -242,10 +215,6 @@ static THD_FUNCTION(ProcessImage, arg) {
 		send_to_computer = !send_to_computer;
     }
 }
-
-/*float get_distance_cm(void){
-	return distance_cm;
-}*/
 
 uint16_t get_line_position(void){
 	return line_position;
@@ -276,5 +245,3 @@ void set_color(int color){
 int get_colour(void){
 	return colour_image;
 }
-
-

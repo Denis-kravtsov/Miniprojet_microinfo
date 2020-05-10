@@ -9,6 +9,7 @@
 #include <main.h>
 #include <usbcfg.h>
 #include <chprintf.h>
+#include <obstacle.h>
 
 #include <motors.h>
 #include <audio/microphone.h>
@@ -33,17 +34,17 @@ static float micBack_output[FFT_SIZE];
 
 #define MIN_VALUE_THRESHOLD	10000
 
-#define MIN_FREQ		10	//we don't analyze before this index to not use resources for nothing
-#define FREQ_RED		58	//??1450Hz
-#define FREQ_GREEN		61	//??1525Hz
-#define MAX_FREQ		128	//we don't analyze after this index to not use resources for nothing
+#define MIN_FREQ		256	//we don't analyze before this index to not use resources for nothing
+#define FREQ_RED		320	//1500Hz
+#define FREQ_GREEN		384	//1000Hz
+#define MAX_FREQ		448	//we don't analyze after this index to not use resources for nothing
 
 #define FREQ_RED_L		(FREQ_RED-1)
 #define FREQ_RED_H		(FREQ_RED+1)
 #define FREQ_GREEN_L	(FREQ_GREEN-1)
 #define FREQ_GREEN_H	(FREQ_GREEN+1)
 
-uint8_t colour;
+//uint8_t colour;
 /*
 *	Simple function used to detect the highest value in a buffer
 *	and to execute a motor command depending on it
@@ -53,28 +54,79 @@ void sound_remote(float* data){
 	int16_t max_norm_index = -1;
 
 	//search for the highest peak
-	for(uint16_t i = MIN_FREQ ; i <= MAX_FREQ ; i++){
-		if(data[i] > max_norm){
-			max_norm = data[i];
-			max_norm_index = i;
-		}
-	}
+	//if(!get_status()){
 
+		for(uint16_t i = MIN_FREQ ; i <= MAX_FREQ ; i++){
+			if(data[i] > max_norm){
+				max_norm = data[i];
+				max_norm_index = i;
+			}
+		}
+	//}
+	/*else{
+		for(uint16_t i = (MAX_FREQ - 2); i <= (MAX_FREQ - 1) ; i++){
+			if(data[i] > max_norm){
+				max_norm = data[i];
+				max_norm_index = i;
+			}
+		}
+	}*/
 	//red street
-		if(max_norm_index >=FREQ_RED_L && max_norm_index <= FREQ_RED_H){
-			status(TRUE);
-			set_color(RED1);
+		/*if(max_norm_index >= FREQ_RED_L && max_norm_index <= FREQ_RED_H && !start){
+			status = 1;
+			start = 1;
+			set_color(RED);
 		}
 		//green street
-		else if(max_norm_index >= FREQ_GREEN_L && max_norm_index <= FREQ_GREEN_H){
-			status(TRUE);
-			set_color(GREEN1);
+		else if(max_norm_index >= FREQ_GREEN_L && max_norm_index <= FREQ_GREEN_H && !start){
+			status = 1;
+			start = 1;
+			set_color(GREEN);
 			}
-		/*else if(max_norm_index>=MAX_FREQ - 9 && max_norm_index <= MAX_FREQ - 7){
-			status(FALSE);
+		else if((max_norm_index>=(MAX_FREQ - 10)) && (max_norm_index <= (MAX_FREQ - 9))){
+			status = 0;
+			start = 0;
  			right_motor_set_speed(0);
  			left_motor_set_speed(0);
 		}*/
+		/*else{
+			if(!start){
+				status = 0;
+			}
+			else
+				status = 1;
+		}*/
+	//if(!get_status()){
+		if((max_norm_index >=FREQ_RED_L && max_norm_index <= FREQ_RED_H) && !get_status()){
+			set_color(RED);
+			right_motor_set_speed(0);
+			left_motor_set_speed(0);
+			set_status(1);
+		}
+		//green street
+		else if((max_norm_index >= FREQ_GREEN_L && max_norm_index <= FREQ_GREEN_H) && !get_status()){
+			set_color(GREEN);
+			right_motor_set_speed(0);
+			left_motor_set_speed(0);
+			set_status(1);
+		}
+		else if(max_norm_index>=(MAX_FREQ - 3) && max_norm_index <= (MAX_FREQ - 1)){
+				right_motor_set_speed(0);
+				left_motor_set_speed(0);
+				set_status(FALSE);
+		}
+	//}
+	/*else{
+		if(max_norm_index>=MAX_FREQ - 10 && max_norm_index <= MAX_FREQ - 1){
+			set_status(FALSE);
+			right_motor_set_speed(0);
+			left_motor_set_speed(0);
+		}
+		//else{
+		//	set_status(1);
+		//}
+	}*/
+
 }
 
 /*
@@ -164,8 +216,7 @@ void wait_send_to_computer(void){
 	chBSemWait(&sendToComputer_sem);
 }
 
-
-/*float* get_audio_buffer_ptr(BUFFER_NAME_t name){
+float* get_audio_buffer_ptr(BUFFER_NAME_t name){
 	if(name == LEFT_CMPLX_INPUT){
 		return micLeft_cmplx_input;
 	}
@@ -193,7 +244,7 @@ void wait_send_to_computer(void){
 	else{
 		return NULL;
 	}
-}*/
+}
 
 /*void audio_detection(float *micleft, float *micright, float *micfront, float *micback,
 					 float *micLeft_mag, float *micFront_mag){
@@ -236,6 +287,6 @@ void wait_send_to_computer(void){
 	int16_t arg_diff_fb_deg = (180/PI)*arg_diff_fb;
 }*/
 
-uint8_t get_colour_detected(void){
-	return colour;
-}
+//uint8_t get_colour_detected(void){
+	//return colour;
+//}

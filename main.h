@@ -20,9 +20,9 @@ extern "C" {
 #define ERROR_THRESHOLD			0.1f	//[cm] because of the noise of the camera
 /** Robot wide IPC bus. */
 extern messagebus_t bus;
-
 extern parameter_namespace_t parameter_root;
-void status(bool status);
+
+
 bool acquire_status(void);
 void direction(bool status);
 void change(bool status);
