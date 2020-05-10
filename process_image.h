@@ -1,14 +1,29 @@
 #ifndef PROCESS_IMAGE_H
 #define PROCESS_IMAGE_H
-
-float get_distance_cm(void);
+/*
+*	gives the line position in pixels (0 to 640)
+*/
 uint16_t get_line_position(void);
+/*
+*	Initiates the threads needed to process the image
+*/
 void process_image_start(void);
-void colour_status(bool status);
+/*
+*	tells if the rising edge was detected
+*/
 bool get_rising_edge(void);
+/*
+*	tells if the falling edge was detected
+*/
 bool get_falling_edge(void);
-bool get_colour_status(void);
-uint16_t get_line_width(void);
+/*
+*	sets the colour to detect
+*/
 void set_color(int color);
+/*
+*	tells which colour is being detected
+*/
 int get_colour(void);
+
+
 #endif /* PROCESS_IMAGE_H */

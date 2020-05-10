@@ -10,8 +10,6 @@
 #include <usbcfg.h>
 #include <chprintf.h>
 #include <obstacle.h>
-
-#include <motors.h>
 #include <audio/microphone.h>
 #include <audio_processing.h>
 #include <process_image.h>
@@ -43,8 +41,9 @@ static float micBack_output[FFT_SIZE];
 #define FREQ_RED_H		(FREQ_RED+1)
 #define FREQ_GREEN_L	(FREQ_GREEN-1)
 #define FREQ_GREEN_H	(FREQ_GREEN+1)
+#define STOP_FREQ_L		(MAX_FREQ-3)
+#define STOP_FREQ_H		(MAX_FREQ-1)
 
-//uint8_t colour;
 /*
 *	Simple function used to detect the highest value in a buffer
 *	and to execute a motor command depending on it
@@ -54,79 +53,26 @@ void sound_remote(float* data){
 	int16_t max_norm_index = -1;
 
 	//search for the highest peak
-	//if(!get_status()){
-
-		for(uint16_t i = MIN_FREQ ; i <= MAX_FREQ ; i++){
-			if(data[i] > max_norm){
-				max_norm = data[i];
-				max_norm_index = i;
-			}
+	for(uint16_t i = MIN_FREQ ; i <= MAX_FREQ ; i++){
+		if(data[i] > max_norm){
+			max_norm = data[i];
+			max_norm_index = i;
 		}
-	//}
-	/*else{
-		for(uint16_t i = (MAX_FREQ - 2); i <= (MAX_FREQ - 1) ; i++){
-			if(data[i] > max_norm){
-				max_norm = data[i];
-				max_norm_index = i;
-			}
-		}
-	}*/
-	//red street
-		/*if(max_norm_index >= FREQ_RED_L && max_norm_index <= FREQ_RED_H && !start){
-			status = 1;
-			start = 1;
-			set_color(RED);
-		}
-		//green street
-		else if(max_norm_index >= FREQ_GREEN_L && max_norm_index <= FREQ_GREEN_H && !start){
-			status = 1;
-			start = 1;
-			set_color(GREEN);
-			}
-		else if((max_norm_index>=(MAX_FREQ - 10)) && (max_norm_index <= (MAX_FREQ - 9))){
-			status = 0;
-			start = 0;
- 			right_motor_set_speed(0);
- 			left_motor_set_speed(0);
-		}*/
-		/*else{
-			if(!start){
-				status = 0;
-			}
-			else
-				status = 1;
-		}*/
-	//if(!get_status()){
-		if((max_norm_index >=FREQ_RED_L && max_norm_index <= FREQ_RED_H) && !get_status()){
-			set_color(RED);
-			right_motor_set_speed(0);
-			left_motor_set_speed(0);
-			set_status(1);
-		}
-		//green street
-		else if((max_norm_index >= FREQ_GREEN_L && max_norm_index <= FREQ_GREEN_H) && !get_status()){
-			set_color(GREEN);
-			right_motor_set_speed(0);
-			left_motor_set_speed(0);
-			set_status(1);
-		}
-		else if(max_norm_index>=(MAX_FREQ - 3) && max_norm_index <= (MAX_FREQ - 1)){
-				right_motor_set_speed(0);
-				left_motor_set_speed(0);
-				set_status(FALSE);
-		}
-	//}
-	/*else{
-		if(max_norm_index>=MAX_FREQ - 10 && max_norm_index <= MAX_FREQ - 1){
-			set_status(FALSE);
-			right_motor_set_speed(0);
-			left_motor_set_speed(0);
-		}
-		//else{
-		//	set_status(1);
-		//}
-	}*/
-
+	}
+	//if corresponding frequency was detected, turns off the standby mode and activates RED mask
+	if((max_norm_index >=FREQ_RED_L && max_norm_index <= FREQ_RED_H) && !get_status()){
+		set_color(RED);
+		set_status(TRUE);
+	}
+	//if corresponding frequency was detected, turns off the standby mode and activates GREEN mask
+	else if((max_norm_index >= FREQ_GREEN_L && max_norm_index <= FREQ_GREEN_H) && !get_status()){
+		set_color(GREEN);
+		set_status(TRUE);
+	}
+	//if corresponding frequency was detected, turns on the standby mode
+	else if(max_norm_index >= (STOP_FREQ_L) && max_norm_index <= (STOP_FREQ_H)){
+		set_status(FALSE);
+	}
 }
 
 /*
@@ -245,48 +191,3 @@ float* get_audio_buffer_ptr(BUFFER_NAME_t name){
 		return NULL;
 	}
 }
-
-/*void audio_detection(float *micleft, float *micright, float *micfront, float *micback,
-					 float *micLeft_mag, float *micFront_mag){
-	float max_norm_left = MIN_VALUE_THRESHOLD;
-	float max_norm_front = MIN_VALUE_THRESHOLD;
-	int16_t max_norm_index_left = -1;
-	int16_t max_norm_index_front = -1;
-	float arg_micLeft = 0;
-	float arg_micRight = 0;
-	float arg_micFront = 0;
-	float arg_micBack = 0;
-	float arg_diff_side = 0;
-	float arg_diff_fb = 0;
-
-	doFFT_optimized(FFT_SIZE, micleft);
-	doFFT_optimized(FFT_SIZE, micright);
-	doFFT_optimized(FFT_SIZE, micfront);
-	doFFT_optimized(FFT_SIZE, micback);
-
-	arm_cmplx_mag_f32(micleft, micLeft_mag, FFT_SIZE);
-	arm_cmplx_mag_f32(micfront, micFront_mag, FFT_SIZE);
-
-	for(uint16_t i = MIN_FREQ ; i <= MAX_FREQ ; i++){
-			if(micLeft_mag[i] > max_norm_left){
-				max_norm_left = micLeft_mag[i];
-				max_norm_index_left = i;
-			}
-			if(micFront_mag[i] > max_norm_front){
-				max_norm_front = micFront_mag[i];
-				max_norm_index_front = i;
-			}
-		}
-	arg_micLeft = atan2f(micleft[(2*max_norm_index_left)+1], micleft[(2*max_norm_index_left)]);
-	arg_micRight = atan2f(micright[(2*max_norm_index_left)+1], micright[2*max_norm_index_left]);
-	arg_micFront = atan2f(micfront[(2*max_norm_index_front)+1], micfront[2*max_norm_index_front]);
-	arg_micBack = atan2f(micback[(2*max_norm_index_front)+1], micback[2*max_norm_index_front]);
-	arg_diff_side = arg_micLeft-arg_micRight;
-	arg_diff_fb = arg_micFront-arg_micBack;
-	int16_t arg_diff_side_deg = (180/PI)*arg_diff_side;
-	int16_t arg_diff_fb_deg = (180/PI)*arg_diff_fb;
-}*/
-
-//uint8_t get_colour_detected(void){
-	//return colour;
-//}

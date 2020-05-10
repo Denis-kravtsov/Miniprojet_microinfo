@@ -24,7 +24,7 @@
 #include "leds.h"
 
 
-//uncomment to send the FFTs results from the real microphones
+//send the FFTs results from the real microphones
 #define SEND_FROM_MIC
 
 messagebus_t bus;
@@ -76,35 +76,29 @@ int main(void)
     //configuration camera
     dcmi_start();
 	po8030_start();
-	//configuration leds
+	//configuration RGB leds
     clear_leds();
     spi_comm_start();
-
+    //inits proximity sensors
     proximity_start();
+    //inits image processing threads
 	process_image_start();
+	//inits thread controlling the movement
 	obstacle_start();
-
+	//inits music threads
 	playMelodyStart();
 	playSoundFileStart();
 	dac_start();
-
-
-
-
     /* Infinite loop. */
     while (1) {
-
 #ifdef SEND_FROM_MIC
         //waits until a result must be sent to the computer
         wait_send_to_computer();
-
 #endif  /* SEND_FROM_MIC */
-
-    		chThdSleepMilliseconds(100);
+    	chThdSleepMilliseconds(100);
     }
 
 }
-
 #define STACK_CHK_GUARD 0xe2dee396
 uintptr_t __stack_chk_guard = STACK_CHK_GUARD;
 
